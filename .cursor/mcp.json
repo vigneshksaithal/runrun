@@ -1,0 +1,21 @@
+{
+    "mcpServers": {
+        "svelte": {
+            "url": "https://mcp.svelte.dev/mcp"
+        },
+        "devvit": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@devvit/mcp"
+            ]
+        },
+        "sequential-thinking": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ]
+        }
+    }
+}
