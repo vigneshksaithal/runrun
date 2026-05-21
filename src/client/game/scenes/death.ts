@@ -35,7 +35,7 @@ export function createDeathScene(k: KAPLAYCtx) {
       k.scale(0),
       k.z(12),
     ])
-    k.tween(0, 1, 0.4, (v: number) => scoreDisplay.scaleTo(v), k.easings.easeOutBack)
+    k.tween(0, 1, 0.4, (v: number) => { if (scoreDisplay.exists()) scoreDisplay.scaleTo(v) }, k.easings.easeOutBack)
 
     k.add([
       k.text('points', { size: 20 }),

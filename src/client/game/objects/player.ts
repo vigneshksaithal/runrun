@@ -113,6 +113,7 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
 
   function jump() {
     if (playerState.current !== 'running') return
+    if (!player.exists()) return
     playerState.current = 'jumping'
 
     // Squash before jump
@@ -136,8 +137,8 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
     }).then(() => {
       if (!player.exists()) return
       playerState.current = 'running'
-      // Stretch on landing
-      player.scaleTo(0.9, 1.1)
+      // Stretch on landing (guarded)
+      if (player.exists()) player.scaleTo(0.9, 1.1)
       k.tween(1.1, 1, 0.12, (val: number) => { if (player.exists()) player.scaleTo(1, val) }, k.easings.easeOutQuad)
 
       // Landing sparkle
@@ -160,14 +161,16 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
 
   function slide() {
     if (playerState.current !== 'running') return
+    if (!player.exists()) return
     playerState.current = 'sliding'
 
     player.scaleTo(1.3, 0.4)
     player.pos.y = GAME_CONFIG.PLAYER_Y + 12
 
     k.wait(GAME_CONFIG.SLIDE_DURATION, () => {
+      if (!player.exists()) return
       playerState.current = 'running'
-      k.tween(0.4, 1, 0.15, (val: number) => { player.scaleTo(1 + (1.3 - 1) * (1 - val), val) }, k.easings.easeOutBack)
+      k.tween(0.4, 1, 0.15, (val: number) => { if (player.exists()) player.scaleTo(1 + (1.3 - 1) * (1 - val), val) }, k.easings.easeOutBack)
       player.pos.y = GAME_CONFIG.PLAYER_Y
     })
   }
