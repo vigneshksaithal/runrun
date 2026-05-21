@@ -75,6 +75,7 @@ export function createStartScene(k: KAPLAYCtx) {
       k.pos(W / 2, 130),
       k.anchor('center'),
       k.color(...COLORS.TEXT_WHITE),
+      k.scale(1),
       k.z(10),
     ])
     title.onUpdate(() => {
