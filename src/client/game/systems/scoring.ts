@@ -1,6 +1,6 @@
 import { GAME_CONFIG } from '../config'
 
-const STORAGE_KEY = 'blockdash_highscore'
+const STORAGE_KEY = 'runrun_highscore'
 
 export function createScoringSystem() {
   let score = 0

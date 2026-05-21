@@ -18,8 +18,8 @@
   "menu": {
     "items": [
       {
-        "label": "Create BlockDash Post",
-        "description": "Create a BlockDash endless runner game post",
+        "label": "Create RunRun Post",
+        "description": "Create a RunRun endless runner game post",
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/post-create"

@@ -11,7 +11,7 @@ import { Hono } from 'hono'
 import { createPost } from './post'
 
 const HTTP_STATUS_BAD_REQUEST = 400
-const LEADERBOARD_KEY = 'blockdash:leaderboard'
+const LEADERBOARD_KEY = 'runrun:leaderboard'
 const MAX_LEADERBOARD_SIZE = 50
 
 export const app = new Hono()

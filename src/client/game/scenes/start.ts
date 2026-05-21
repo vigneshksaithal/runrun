@@ -27,7 +27,7 @@ export function createStartScene(k: KAPLAYCtx) {
 
     // Title glow shadow (green-tinted)
     k.add([
-      k.text('BLOCKDASH', { size: 48 }),
+      k.text('RUNRUN', { size: 48 }),
       k.pos(GAME_CONFIG.WIDTH / 2 + 2, 182),
       k.anchor('center'),
       k.color(...C.CRYSTAL_GREEN),
@@ -38,7 +38,7 @@ export function createStartScene(k: KAPLAYCtx) {
 
     // Title
     k.add([
-      k.text('BLOCKDASH', { size: 48 }),
+      k.text('RUNRUN', { size: 48 }),
       k.pos(GAME_CONFIG.WIDTH / 2, 180),
       k.anchor('center'),
       k.color(...C.TEXT_WHITE),
@@ -48,7 +48,7 @@ export function createStartScene(k: KAPLAYCtx) {
 
     // Subtitle - bright teal
     k.add([
-      k.text('How far can you dash?', { size: 18 }),
+      k.text('How far can you run?', { size: 18 }),
       k.pos(GAME_CONFIG.WIDTH / 2, 230),
       k.anchor('center'),
       k.color(80, 220, 200),
@@ -133,7 +133,7 @@ export function createStartScene(k: KAPLAYCtx) {
     // High score
     let highScore = 0
     try {
-      const saved = localStorage.getItem('blockdash_highscore')
+      const saved = localStorage.getItem('runrun_highscore')
       highScore = saved ? parseInt(saved, 10) : 0
     } catch { /* */ }
 
