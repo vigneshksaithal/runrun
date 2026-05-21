@@ -1,88 +1,86 @@
 import { GAME_CONFIG } from '../config'
 
-export interface ScoreState {
-  score: number
-  highScore: number
-  distance: number
-  coinsCollected: number
-  combo: number
-  multiplier: number
-}
+const STORAGE_KEY = 'blockdash_highscore'
 
 export function createScoringSystem() {
-  const state: ScoreState = {
-    score: 0,
-    highScore: getLocalHighScore(),
-    distance: 0,
-    coinsCollected: 0,
-    combo: 0,
-    multiplier: 1,
+  let score = 0
+  let coinsCollected = 0
+  let comboCount = 0
+  let multiplier = 1
+  let highScore = loadHighScore()
+
+  function loadHighScore(): number {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      return saved ? parseInt(saved, 10) : 0
+    } catch {
+      return 0
+    }
+  }
+
+  function saveHighScore() {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(highScore))
+    } catch {
+      // localStorage may not be available
+    }
   }
 
   return {
-    getState(): ScoreState {
-      return { ...state }
+    getScore(): number {
+      return Math.floor(score)
     },
 
-    update(dt: number, speed: number) {
-      const distanceGained = speed * dt * GAME_CONFIG.SCORE_PER_SECOND
-      state.distance += distanceGained
-      state.score = Math.floor(state.distance)
+    getCoins(): number {
+      return coinsCollected
+    },
+
+    getMultiplier(): number {
+      return multiplier
+    },
+
+    getHighScore(): number {
+      return highScore
+    },
+
+    isNewHighScore(): boolean {
+      return Math.floor(score) > highScore
+    },
+
+    addDistance(dt: number) {
+      score += GAME_CONFIG.SCORE_PER_SECOND * dt * multiplier
     },
 
     addCoin() {
-      state.coinsCollected++
-      state.combo++
-      // Every 5 coins = +1x multiplier (max 5x)
-      state.multiplier = Math.min(
-        GAME_CONFIG.MAX_MULTIPLIER,
-        1 + Math.floor(state.combo / GAME_CONFIG.COMBO_THRESHOLD)
-      )
-      const coinScore = GAME_CONFIG.COIN_SCORE * state.multiplier
-      state.score += coinScore
-    },
+      coinsCollected++
+      score += GAME_CONFIG.COIN_SCORE * multiplier
+      comboCount++
 
-    resetCombo() {
-      state.combo = 0
-      state.multiplier = 1
-    },
-
-    getFinalScore(): number {
-      return state.score
-    },
-
-    checkHighScore(): boolean {
-      if (state.score > state.highScore) {
-        state.highScore = state.score
-        setLocalHighScore(state.score)
-        return true
+      if (comboCount >= GAME_CONFIG.COMBO_THRESHOLD) {
+        multiplier = Math.min(multiplier + 1, GAME_CONFIG.MAX_MULTIPLIER)
+        comboCount = 0
       }
-      return false
+    },
+
+    breakCombo() {
+      comboCount = 0
+      multiplier = 1
+    },
+
+    finalize() {
+      const finalScore = Math.floor(score)
+      if (finalScore > highScore) {
+        highScore = finalScore
+        saveHighScore()
+      }
+      return finalScore
     },
 
     reset() {
-      state.score = 0
-      state.distance = 0
-      state.coinsCollected = 0
-      state.combo = 0
-      state.multiplier = 1
-      state.highScore = getLocalHighScore()
-    }
-  }
-}
-
-function getLocalHighScore(): number {
-  try {
-    return parseInt(localStorage.getItem('blockdash_highscore') || '0', 10)
-  } catch {
-    return 0
-  }
-}
-
-function setLocalHighScore(score: number) {
-  try {
-    localStorage.setItem('blockdash_highscore', score.toString())
-  } catch {
-    // Ignore storage errors
+      score = 0
+      coinsCollected = 0
+      comboCount = 0
+      multiplier = 1
+    },
   }
 }

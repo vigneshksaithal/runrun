@@ -1,354 +1,447 @@
-import type { KAPLAYCtx } from 'kaplay'
-import { GAME_CONFIG } from '../config'
+import type { KAPLAYCtx, GameObj } from 'kaplay'
+import { GAME_CONFIG, getLaneXAtDepth, getDepthScale } from '../config'
+import { createPlayer, jumpPlayer, slidePlayer, createDeathParticles } from '../objects/player'
+import { createCoin, updateCoin, createCoinCollectEffect } from '../objects/collectible'
+import { createObstacle, updateObstacle, type ObstacleType } from '../objects/obstacle'
 import { createInputSystem } from '../systems/input'
 import { createLaneSystem } from '../systems/lanes'
 import { createScoringSystem } from '../systems/scoring'
 import { createSpawnerSystem } from '../systems/spawner'
-import { createPlayer, createDeathParticles } from '../objects/player'
-import { createObstacle, updateObstacle, createObstacleDestroyParticles, type Obstacle } from '../objects/obstacle'
-import { createCollectible, updateCollectible, createCollectParticles, type Collectible } from '../objects/collectible'
 
-const { COLORS } = GAME_CONFIG
+const C = GAME_CONFIG.COLORS
 
 export function createGameScene(k: KAPLAYCtx) {
   k.scene('game', () => {
-    const W = GAME_CONFIG.WIDTH
-    const H = GAME_CONFIG.HEIGHT
+    let gameSpeed = GAME_CONFIG.INITIAL_SPEED
+    let isJumping = false
+    let isSliding = false
+    let isDead = false
 
     // Systems
     const input = createInputSystem(k)
     const lanes = createLaneSystem()
     const scoring = createScoringSystem()
-    const spawner = createSpawnerSystem()
+    const spawner = createSpawnerSystem(k)
 
-    // Game state
-    let gameSpeed = GAME_CONFIG.INITIAL_SPEED
-    let gameTime = 0
-    let alive = true
-    const obstacles: Obstacle[] = []
-    const collectibles: Collectible[] = []
+    // === BACKGROUND ===
+    // Dark warm gradient
+    k.add([
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT / 2),
+      k.pos(0, 0),
+      k.color(...C.BG_TOP),
+      k.z(0),
+    ])
+    k.add([
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT / 2),
+      k.pos(0, GAME_CONFIG.HEIGHT / 2),
+      k.color(...C.BG_MID),
+      k.z(0),
+    ])
 
-    // Draw dark neon track background
-    drawTrackBackground(k)
+    // Left wall
+    k.add([
+      k.rect(80, GAME_CONFIG.HEIGHT),
+      k.pos(0, 0),
+      k.color(...C.WALL_DARK),
+      k.z(1),
+    ])
+    // Right wall
+    k.add([
+      k.rect(80, GAME_CONFIG.HEIGHT),
+      k.pos(GAME_CONFIG.WIDTH - 80, 0),
+      k.color(...C.WALL_DARK),
+      k.z(1),
+    ])
+    // Left wall highlight
+    k.add([
+      k.rect(8, GAME_CONFIG.HEIGHT),
+      k.pos(78, 0),
+      k.color(...C.WALL_LIGHT),
+      k.z(2),
+    ])
+    // Right wall highlight
+    k.add([
+      k.rect(8, GAME_CONFIG.HEIGHT),
+      k.pos(GAME_CONFIG.WIDTH - 86, 0),
+      k.color(...C.WALL_LIGHT),
+      k.z(2),
+    ])
 
-    // Create animated road markings (neon cyan)
-    const roadLines = createAnimatedRoadLines(k)
-
-    // Ambient neon particles (cyan/pink floating)
-    interface SparkleObj { pos: { x: number; y: number }; opacity: number; destroy(): void }
-    const sparkles: Array<{ obj: SparkleObj; vx: number; vy: number }> = []
-    for (let i = 0; i < 14; i++) {
-      const isCyan = i % 3 !== 0
-      const color: [number, number, number] = isCyan ? COLORS.PARTICLE_CYAN : COLORS.PARTICLE_PINK
-      const obj = k.add([
-        k.rect(k.rand(2, 4), k.rand(2, 4)),
-        k.pos(k.rand(40, W - 40), k.rand(220, H - 100)),
-        k.color(...color),
-        k.opacity(k.rand(0.05, 0.2)),
+    // Torch lights (2 per side = 4 total)
+    function addTorch(x: number, y: number) {
+      // Flame rect
+      k.add([
+        k.rect(8, 12),
+        k.pos(x, y),
         k.anchor('center'),
-        k.z(95),
-      ]) as unknown as SparkleObj
-      sparkles.push({ obj, vx: k.rand(-5, 5), vy: k.rand(-8, -2) })
+        k.color(...C.TORCH_FLAME),
+        k.opacity(0.8),
+        k.z(3),
+      ])
+      // Glow rect
+      k.add([
+        k.rect(20, 20),
+        k.pos(x, y),
+        k.anchor('center'),
+        k.color(...C.TORCH_GLOW),
+        k.opacity(0.15),
+        k.z(2),
+      ])
+    }
+    addTorch(55, 300)
+    addTorch(55, 550)
+    addTorch(GAME_CONFIG.WIDTH - 55, 300)
+    addTorch(GAME_CONFIG.WIDTH - 55, 550)
+
+    // Track/floor area
+    k.add([
+      k.rect(GAME_CONFIG.WIDTH - 160, GAME_CONFIG.HEIGHT),
+      k.pos(80, 0),
+      k.color(...C.TRACK_TOP),
+      k.z(1),
+    ])
+
+    // === ROAD LINES ===
+    const roadLines: GameObj[] = []
+    for (let i = 0; i < GAME_CONFIG.ROAD_LINE_COUNT; i++) {
+      const progress = i / GAME_CONFIG.ROAD_LINE_COUNT
+      const y = GAME_CONFIG.LANE_Y_TOP + progress * (GAME_CONFIG.LANE_Y_BOTTOM - GAME_CONFIG.LANE_Y_TOP)
+      const scale = getDepthScale(y)
+      const lineWidth = 300 * scale
+      const centerX = GAME_CONFIG.VANISHING_POINT_X
+
+      const line = k.add([
+        k.rect(lineWidth, 2),
+        k.pos(centerX, y),
+        k.anchor('center'),
+        k.color(...C.LANE_LINE),
+        k.opacity(0.3 + progress * 0.3),
+        k.z(3),
+        { baseProgress: progress },
+      ])
+      roadLines.push(line)
     }
 
-    // Create player
-    const player = createPlayer(k, lanes.getCurrentX())
+    // Update road lines animation
+    let roadLineOffset = 0
 
-    // HUD - Score (top center, large)
+    // === AMBIENT DUST PARTICLES (max 6) ===
+    for (let i = 0; i < 6; i++) {
+      const dust = k.add([
+        k.rect(k.rand(2, 4), k.rand(2, 4)),
+        k.pos(k.rand(100, 500), k.rand(250, 700)),
+        k.anchor('center'),
+        k.color(...C.PARTICLE_DUST),
+        k.opacity(k.rand(0.1, 0.25)),
+        k.z(4),
+      ])
+
+      const baseX = dust.pos.x
+      let driftTime = k.rand(0, 10)
+
+      dust.onUpdate(() => {
+        driftTime += k.dt() * 0.5
+        dust.pos.x = baseX + Math.sin(driftTime) * 15
+        dust.pos.y += k.dt() * 10
+        if (dust.pos.y > 720) {
+          dust.pos.y = 250
+          dust.pos.x = k.rand(100, 500)
+        }
+      })
+    }
+
+    // === PLAYER ===
+    const player = createPlayer(k)
+
+    // === HUD ===
     const scoreText = k.add([
-      k.text('0', { size: 36 }),
-      k.pos(W / 2, 35),
+      k.text('0', { size: 28 }),
+      k.pos(GAME_CONFIG.WIDTH / 2, 30),
       k.anchor('center'),
-      k.color(...COLORS.TEXT_WHITE),
-      k.scale(1),
+      k.color(...C.TEXT_WHITE),
       k.z(200),
-      k.fixed(),
     ])
 
-    // Coin count (top left with icon)
-    const coinIcon = k.add([
-      k.rect(16, 16, { radius: 8 }),
-      k.pos(30, 35),
-      k.anchor('center'),
-      k.color(...COLORS.COIN),
-      k.z(200),
-      k.fixed(),
-    ])
-    void coinIcon
-
-    const coinCountText = k.add([
+    const coinText = k.add([
       k.text('0', { size: 20 }),
-      k.pos(52, 35),
+      k.pos(30, 30),
       k.anchor('left'),
-      k.color(...COLORS.TEXT_GOLD),
+      k.color(...C.TEXT_GOLD),
       k.z(200),
-      k.fixed(),
     ])
 
-    // Multiplier text (only visible when > 1x)
-    const multiplierText = k.add([
-      k.text('', { size: 22 }),
-      k.pos(W / 2, 70),
+    // Coin icon next to text
+    k.add([
+      k.rect(12, 10),
+      k.pos(16, 30),
       k.anchor('center'),
-      k.color(...COLORS.COMBO_TEXT),
-      k.opacity(0),
+      k.color(...C.COIN),
       k.z(200),
-      k.fixed(),
     ])
 
-    // Main game loop
+    let comboText: GameObj | null = null
+
+    // === SPEED LINES (only above speed 8) ===
+    const speedLines: GameObj[] = []
+
+    // === GAME LOOP ===
     k.onUpdate(() => {
-      if (!alive) return
+      if (isDead) return
 
       const dt = k.dt()
-      gameTime += dt
 
-      // Increase speed over time
-      gameSpeed = Math.min(
-        GAME_CONFIG.MAX_SPEED,
-        GAME_CONFIG.INITIAL_SPEED + gameTime * GAME_CONFIG.SPEED_INCREASE_RATE
-      )
+      // Increase speed
+      gameSpeed = Math.min(gameSpeed + GAME_CONFIG.SPEED_INCREASE_RATE * dt, GAME_CONFIG.MAX_SPEED)
 
       // Process input
       const action = input.consume()
-      if (action === 'left') {
-        lanes.moveLeft()
-      } else if (action === 'right') {
-        lanes.moveRight()
-      } else if (action === 'jump') {
-        player.jump()
-      } else if (action === 'slide') {
-        player.slide()
+      if (action === 'left') lanes.moveLeft()
+      else if (action === 'right') lanes.moveRight()
+      else if (action === 'jump' && !isJumping) {
+        isJumping = true
+        jumpPlayer(k, player)
+        k.wait(GAME_CONFIG.JUMP_DURATION, () => { isJumping = false })
+      } else if (action === 'slide' && !isSliding) {
+        isSliding = true
+        slidePlayer(k, player)
+        k.wait(GAME_CONFIG.SLIDE_DURATION, () => { isSliding = false })
       }
 
       // Update lane position
       lanes.update()
-      player.setX(lanes.getCurrentX())
-
-      // Update animated road lines
-      updateRoadLines(roadLines, gameSpeed, dt)
+      if (player.exists()) {
+        player.pos.x = lanes.getCurrentX()
+      }
 
       // Update scoring
-      scoring.update(dt, gameSpeed)
-      const state = scoring.getState()
-      scoreText.text = Math.floor(state.score).toString()
-      coinCountText.text = state.coinsCollected.toString()
+      scoring.addDistance(dt)
+      scoreText.text = String(scoring.getScore())
+      coinText.text = String(scoring.getCoins())
 
-      // Multiplier HUD
-      if (state.multiplier > 1) {
-        multiplierText.text = `${state.multiplier}x`
-        multiplierText.opacity = 0.9
-      } else {
-        multiplierText.opacity = 0
-      }
-
-      // Score milestone pop
-      if (state.score > 0 && Math.floor(state.score) % 100 === 0 && Math.floor(state.score - gameSpeed * dt * GAME_CONFIG.SCORE_PER_SECOND) % 100 !== 0) {
-        scoreText.scaleTo(1.5)
-        k.tween(1.5, 1, 0.3, (v: number) => { if (scoreText.exists()) scoreText.scaleTo(v) }, k.easings.easeOutBack)
-      }
-
-      // Spawn items
-      const spawnEvents = spawner.update(dt, gameSpeed, state.score)
-      for (const event of spawnEvents) {
-        if (event.type === 'coin') {
-          collectibles.push(createCollectible(k, event.lane))
+      // Combo display
+      const mult = scoring.getMultiplier()
+      if (mult > 1) {
+        if (!comboText) {
+          comboText = k.add([
+            k.text(`x${mult}`, { size: 22 }),
+            k.pos(GAME_CONFIG.WIDTH / 2, 60),
+            k.anchor('center'),
+            k.color(...C.COMBO_TEXT),
+            k.z(200),
+          ])
         } else {
-          obstacles.push(createObstacle(k, event.type, event.lane))
+          comboText.text = `x${mult}`
+        }
+      } else if (comboText && comboText.exists()) {
+        comboText.destroy()
+        comboText = null
+      }
+
+      // Update spawner
+      spawner.update(dt, gameSpeed)
+
+      // Road line animation
+      roadLineOffset += dt * gameSpeed * 0.3
+      if (roadLineOffset > 1) roadLineOffset -= 1
+      for (const line of roadLines) {
+        if (!line.exists()) continue
+        let progress = (line.baseProgress + roadLineOffset) % 1
+        const y = GAME_CONFIG.LANE_Y_TOP + progress * (GAME_CONFIG.LANE_Y_BOTTOM - GAME_CONFIG.LANE_Y_TOP)
+        const scale = getDepthScale(y)
+        line.pos.y = y
+        line.width = 300 * scale
+        line.opacity = 0.2 + progress * 0.4
+      }
+
+      // Speed lines (only above speed 8)
+      if (gameSpeed > 8) {
+        if (speedLines.length < 4 && k.rand(0, 1) < 0.1) {
+          const sl = k.add([
+            k.rect(2, k.rand(30, 60)),
+            k.pos(k.rand(100, 500), -20),
+            k.anchor('center'),
+            k.color(...C.SPEED_LINE),
+            k.opacity(0.3),
+            k.scale(1),
+            k.lifespan(0.4, { fade: 0.3 }),
+            k.z(5),
+          ])
+          speedLines.push(sl)
+          sl.onUpdate(() => {
+            sl.pos.y += 800 * dt
+          })
+          sl.onDestroy(() => {
+            const idx = speedLines.indexOf(sl)
+            if (idx >= 0) speedLines.splice(idx, 1)
+          })
+        }
+      }
+
+      // Update coins
+      const coins = k.get('coin')
+      for (const coin of coins) {
+        const pastBottom = updateCoin(k, coin, gameSpeed, dt)
+        if (pastBottom && coin.exists()) {
+          coin.destroy()
+          scoring.breakCombo()
+          continue
+        }
+
+        // Collision check with player
+        if (!coin.exists() || !player.exists()) continue
+        const dx = Math.abs(coin.pos.x - player.pos.x)
+        const dy = Math.abs(coin.pos.y - player.pos.y)
+        if (dx < 35 && dy < 45) {
+          createCoinCollectEffect(k, coin.pos.x, coin.pos.y)
+          coin.destroy()
+          scoring.addCoin()
         }
       }
 
       // Update obstacles
-      for (let i = obstacles.length - 1; i >= 0; i--) {
-        const obs = obstacles[i]
-        if (!obs) continue
-
-        const pastScreen = updateObstacle(k, obs, gameSpeed, dt)
-
-        if (pastScreen) {
-          obs.obj.destroy()
-          obstacles.splice(i, 1)
+      const obstacles = k.get('obstacle')
+      for (const obs of obstacles) {
+        const pastBottom = updateObstacle(k, obs, gameSpeed, dt)
+        if (pastBottom && obs.exists()) {
+          obs.destroy()
           continue
         }
 
-        // Collision detection
-        if (!obs.passed && obs.y > GAME_CONFIG.PLAYER_Y - 45 && obs.y < GAME_CONFIG.PLAYER_Y + 15) {
-          if (obs.lane === lanes.getCurrentLane()) {
-            const canDodge = checkDodge(obs.type, player.state.current)
+        // Collision check
+        if (!obs.exists() || !player.exists()) continue
+        if (obs.lane !== lanes.getCurrentLane()) continue
 
-            if (!canDodge) {
-              die()
-              return
-            }
-          }
-          obs.passed = true
-        }
-      }
+        const dy = Math.abs(obs.baseY - GAME_CONFIG.PLAYER_Y)
+        if (dy > 40) continue
 
-      // Update collectibles
-      for (let i = collectibles.length - 1; i >= 0; i--) {
-        const col = collectibles[i]
-        if (!col) continue
+        // Check obstacle type vs player action
+        const type = obs.obstacleType as string
+        if (type === 'stone_wall' && isJumping) continue
+        if (type === 'low_beam' && isSliding) continue
+        // Pillar: must switch lanes (already checked lane above)
 
-        const pastScreen = updateCollectible(k, col, gameSpeed, dt)
-
-        if (pastScreen) {
-          col.obj.destroy()
-          collectibles.splice(i, 1)
-          continue
-        }
-
-        // Collection detection
-        if (!col.collected && col.y > GAME_CONFIG.PLAYER_Y - 40 && col.y < GAME_CONFIG.PLAYER_Y + 15) {
-          if (col.lane === lanes.getCurrentLane()) {
-            col.collected = true
-            scoring.addCoin()
-            createCollectParticles(k, col.obj.pos.x, col.obj.pos.y)
-            col.obj.destroy()
-            collectibles.splice(i, 1)
-          }
-        }
-      }
-
-      // Update ambient sparkles
-      for (const sparkle of sparkles) {
-        sparkle.obj.pos.x += sparkle.vx * dt
-        sparkle.obj.pos.y += sparkle.vy * dt
-        if (sparkle.obj.pos.y < 200) {
-          sparkle.obj.pos.y = H - 100
-          sparkle.obj.pos.x = k.rand(40, W - 40)
-        }
-        if (sparkle.obj.pos.x < 20 || sparkle.obj.pos.x > W - 20) {
-          sparkle.vx = -sparkle.vx
-        }
-        sparkle.obj.opacity = 0.05 + Math.sin(k.time() * 2.5 + sparkle.obj.pos.x * 0.01) * 0.1
-      }
-
-      // Speed lines at high speed (cyan-tinted)
-      if (gameSpeed > 7) {
-        if (Math.random() < 0.3) {
-          spawnSpeedLine(k, W, H)
-        }
+        // COLLISION - DEATH
+        handleDeath(obs)
+        break
       }
     })
 
-    function checkDodge(obstacleType: string, playerState: string): boolean {
-      if (obstacleType === 'barrier' && playerState === 'jumping') return true
-      if (obstacleType === 'low_beam' && playerState === 'sliding') return true
-      return false
-    }
+    // === DEATH HANDLER (inline) ===
+    function handleDeath(_obs: GameObj) {
+      if (isDead) return
+      isDead = true
 
-    function die() {
-      alive = false
+      const finalScore = scoring.finalize()
+      const px = player.pos.x
+      const py = player.pos.y
 
-      // Screen shake
-      k.shake(12)
+      // 1. Explode player into particles
+      if (player.exists()) {
+        player.destroy()
+      }
+      createDeathParticles(k, px, py)
 
-      // Death particles
-      createDeathParticles(k, player.obj.pos.x, player.obj.pos.y)
+      // 2. Screen shake
+      k.shake(8)
 
-      // Hide player
-      player.obj.hidden = true
-
-      // Flash screen magenta briefly (0.3s)
+      // 3. Red flash (0.2s)
       const flash = k.add([
-        k.rect(W, H),
+        k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
         k.pos(0, 0),
-        k.color(255, 40, 80),
+        k.color(200, 30, 30),
         k.opacity(0.4),
-        k.z(300),
-        k.fixed(),
+        k.z(250),
       ])
-      k.tween(0.4, 0, 0.3, (v: number) => { flash.opacity = v })
+      k.wait(0.2, () => {
+        if (flash.exists()) flash.destroy()
+      })
 
-      // Check high score
-      const finalScore = scoring.getFinalScore()
-      const isHighScore = scoring.checkHighScore()
-      const finalState = scoring.getState()
-
-      // Submit score (non-blocking)
-      submitScore(finalScore)
-
-      // Show score overlay after brief flash
+      // 4. Dark overlay with score (0.3s delay)
       k.wait(0.3, () => {
-        // Dark purple overlay
         const overlay = k.add([
-          k.rect(W, H),
+          k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
           k.pos(0, 0),
-          k.color(12, 8, 30),
-          k.opacity(0.85),
-          k.z(310),
-          k.fixed(),
+          k.color(10, 8, 6),
+          k.opacity(0.8),
+          k.z(260),
         ])
         void overlay
 
-        // Big score number
-        const bigScore = k.add([
-          k.text(finalScore.toString(), { size: 72 }),
-          k.pos(W / 2, H / 2 - 60),
-          k.anchor('center'),
-          k.color(...COLORS.TEXT_WHITE),
-          k.scale(0),
-          k.z(320),
-          k.fixed(),
-        ])
-        k.tween(0, 1, 0.3, (v: number) => { if (bigScore.exists()) bigScore.scaleTo(v) }, k.easings.easeOutBack)
-
-        // "points" label
+        // Score display
         k.add([
-          k.text('points', { size: 20 }),
-          k.pos(W / 2, H / 2 - 10),
+          k.text('GAME OVER', { size: 36 }),
+          k.pos(GAME_CONFIG.WIDTH / 2, 280),
           k.anchor('center'),
-          k.color(140, 120, 180),
-          k.z(320),
-          k.fixed(),
+          k.color(...C.TEXT_WHITE),
+          k.z(270),
         ])
 
-        // Coins collected
         k.add([
-          k.text(`Coins: ${finalState.coinsCollected}`, { size: 18 }),
-          k.pos(W / 2, H / 2 + 25),
+          k.text(`Score: ${finalScore}`, { size: 28 }),
+          k.pos(GAME_CONFIG.WIDTH / 2, 340),
           k.anchor('center'),
-          k.color(...COLORS.TEXT_GOLD),
-          k.z(320),
-          k.fixed(),
+          k.color(...C.TEXT_GOLD),
+          k.z(270),
         ])
 
-        // New high score badge
-        if (isHighScore) {
+        if (scoring.isNewHighScore()) {
           k.add([
             k.text('NEW BEST!', { size: 22 }),
-            k.pos(W / 2, H / 2 + 60),
+            k.pos(GAME_CONFIG.WIDTH / 2, 380),
             k.anchor('center'),
-            k.color(...COLORS.TEXT_GOLD),
-            k.z(320),
-            k.fixed(),
+            k.color(...C.COMBO_TEXT),
+            k.z(270),
           ])
         }
 
-        // "TAP TO RESTART" text (cyan glow)
-        const tapText = k.add([
-          k.text('TAP TO RESTART', { size: 20 }),
-          k.pos(W / 2, H / 2 + 110),
+        k.add([
+          k.text(`Coins: ${scoring.getCoins()}`, { size: 20 }),
+          k.pos(GAME_CONFIG.WIDTH / 2, 420),
           k.anchor('center'),
-          k.color(...COLORS.TEXT_CYAN),
-          k.opacity(1),
-          k.z(320),
-          k.fixed(),
+          k.color(...C.TEXT_GOLD),
+          k.z(270),
         ])
+
+        // 5. TAP TO PLAY pulsing text
+        const tapText = k.add([
+          k.text('TAP TO PLAY', { size: 24 }),
+          k.pos(GAME_CONFIG.WIDTH / 2, 520),
+          k.anchor('center'),
+          k.color(...C.TEXT_WHITE),
+          k.opacity(1),
+          k.scale(1),
+          k.z(270),
+        ])
+
+        let tapPulse = 0
         tapText.onUpdate(() => {
-          tapText.opacity = 0.5 + Math.sin(k.time() * 4) * 0.5
+          tapPulse += k.dt() * 3
+          tapText.opacity = 0.5 + Math.sin(tapPulse) * 0.5
         })
 
-        // Allow tap to restart immediately
+        // 6. Allow tap to restart
         let canRestart = true
+        k.onKeyPress(() => {
+          if (canRestart) {
+            canRestart = false
+            k.go('game')
+          }
+        })
+        k.onMousePress(() => {
+          if (canRestart) {
+            canRestart = false
+            k.go('game')
+          }
+        })
+        k.onTouchStart(() => {
+          if (canRestart) {
+            canRestart = false
+            k.go('game')
+          }
+        })
 
-        k.onKeyPress(() => { if (canRestart) { canRestart = false; k.go('game') } })
-        k.onClick(() => { if (canRestart) { canRestart = false; k.go('game') } })
-        k.onTouchStart(() => { if (canRestart) { canRestart = false; k.go('game') } })
-
-        // Auto restart after 1.5s
-        k.wait(1.5, () => {
+        // 7. Auto-restart after 2.0 seconds
+        k.wait(2.0, () => {
           if (canRestart) {
             canRestart = false
             k.go('game')
@@ -357,240 +450,4 @@ export function createGameScene(k: KAPLAYCtx) {
       })
     }
   })
-}
-
-// Road line objects for animation
-interface RoadLine {
-  obj: ReturnType<KAPLAYCtx['add']> & { pos: { x: number; y: number }; width: number; height: number; opacity: number }
-  glowObj: ReturnType<KAPLAYCtx['add']> & { pos: { x: number; y: number }; width: number; height: number; opacity: number }
-  baseY: number
-  lane: number
-}
-
-function createAnimatedRoadLines(k: KAPLAYCtx): RoadLine[] {
-  const lines: RoadLine[] = []
-  const VP_Y = GAME_CONFIG.LANE_Y_TOP
-  const BOTTOM = GAME_CONFIG.LANE_Y_BOTTOM
-  const range = BOTTOM - VP_Y
-  const COUNT = GAME_CONFIG.ROAD_LINE_COUNT
-
-  for (let i = 0; i < COUNT; i++) {
-    const t = i / COUNT
-
-    // Center dashed lines (2 lane dividers)
-    for (let laneDiv = 0; laneDiv < 2; laneDiv++) {
-      const scale = 0.15 + t * 0.85
-      const laneOffset = (laneDiv - 0.5) * GAME_CONFIG.LANE_WIDTH * scale
-      const x = GAME_CONFIG.VANISHING_POINT_X + laneOffset
-      const y = VP_Y + range * t
-      const lineWidth = 2 + t * 4
-      const lineHeight = 4 + t * 18
-
-      // Glow behind (wider, semi-transparent cyan)
-      const glowObj = k.add([
-        k.rect(lineWidth * 3, lineHeight * 1.4),
-        k.pos(x, y),
-        k.anchor('center'),
-        k.color(...COLORS.LANE_GLOW),
-        k.opacity(0.1 + t * 0.15),
-        k.z(4),
-      ])
-
-      // Main neon line
-      const obj = k.add([
-        k.rect(lineWidth, lineHeight),
-        k.pos(x, y),
-        k.anchor('center'),
-        k.color(...COLORS.LANE_LINE),
-        k.opacity(0.4 + t * 0.5),
-        k.z(5),
-      ])
-
-      lines.push({ obj, glowObj, baseY: t, lane: laneDiv })
-    }
-  }
-
-  return lines
-}
-
-function updateRoadLines(lines: RoadLine[], speed: number, dt: number) {
-  const VP_Y = GAME_CONFIG.LANE_Y_TOP
-  const BOTTOM = GAME_CONFIG.LANE_Y_BOTTOM
-  const range = BOTTOM - VP_Y
-
-  for (const line of lines) {
-    line.baseY += speed * dt * 0.8
-
-    if (line.baseY > 1) {
-      line.baseY -= 1
-    }
-
-    const t = line.baseY
-    const y = VP_Y + range * t
-    const scale = 0.15 + t * 0.85
-    const laneOffset = (line.lane - 0.5) * GAME_CONFIG.LANE_WIDTH * scale
-    const x = GAME_CONFIG.VANISHING_POINT_X + laneOffset
-    const lineWidth = 2 + t * 4
-    const lineHeight = 4 + t * 18
-
-    line.obj.pos.x = x
-    line.obj.pos.y = y
-    line.obj.width = lineWidth
-    line.obj.height = lineHeight
-    line.obj.opacity = 0.4 + t * 0.5
-
-    // Update glow
-    line.glowObj.pos.x = x
-    line.glowObj.pos.y = y
-    line.glowObj.width = lineWidth * 3
-    line.glowObj.height = lineHeight * 1.4
-    line.glowObj.opacity = 0.1 + t * 0.15
-  }
-}
-
-function drawTrackBackground(k: KAPLAYCtx) {
-  const W = GAME_CONFIG.WIDTH
-  const H = GAME_CONFIG.HEIGHT
-  const VP_Y = GAME_CONFIG.LANE_Y_TOP - 40
-
-  // Dark gradient sky (deep indigo top → rich purple bottom)
-  const skySegments = 14
-  for (let i = 0; i < skySegments; i++) {
-    const t = i / skySegments
-    const r = 12 + t * 10
-    const g = 8 + t * 10
-    const b = 30 + t * 20
-    k.add([
-      k.rect(W, Math.ceil(VP_Y / skySegments) + 1),
-      k.pos(0, i * (VP_Y / skySegments)),
-      k.color(r, g, b),
-      k.z(0),
-    ])
-  }
-
-  // Track area - dark purple-tinted ground with depth gradient
-  const trackRange = H - VP_Y
-  const trackSegments = 18
-  for (let i = 0; i < trackSegments; i++) {
-    const t = i / trackSegments
-    const r = 20 + t * 15
-    const g = 16 + t * 12
-    const b = 40 + t * 20
-    k.add([
-      k.rect(W, Math.ceil(trackRange / trackSegments) + 1),
-      k.pos(0, VP_Y + i * (trackRange / trackSegments)),
-      k.color(r, g, b),
-      k.z(0),
-    ])
-  }
-
-  // Side walls (left) - deep purple with subtle lighter accents
-  const wallSegments = 16
-  for (let i = 0; i < wallSegments; i++) {
-    const t = i / wallSegments
-    const y = VP_Y + trackRange * t
-    const width = 12 + t * 60
-    const segH = Math.ceil(trackRange / wallSegments) + 1
-
-    k.add([
-      k.rect(width, segH),
-      k.pos(0, y),
-      k.color(15 + t * 15, 10 + t * 12, 35 + t * 20),
-      k.z(2),
-    ])
-
-    // Neon accent strips on walls (subtle cyan glow)
-    if (i % 4 === 0 && t > 0.2) {
-      k.add([
-        k.rect(width * 0.6, 2),
-        k.pos(2, y + segH / 2),
-        k.color(...COLORS.LANE_LINE),
-        k.opacity(0.15),
-        k.z(3),
-      ])
-    }
-  }
-
-  // Side walls (right) - mirror
-  for (let i = 0; i < wallSegments; i++) {
-    const t = i / wallSegments
-    const y = VP_Y + trackRange * t
-    const width = 12 + t * 60
-    const segH = Math.ceil(trackRange / wallSegments) + 1
-
-    k.add([
-      k.rect(width, segH),
-      k.pos(W - width, y),
-      k.color(15 + t * 15, 10 + t * 12, 35 + t * 20),
-      k.z(2),
-    ])
-
-    if (i % 4 === 0 && t > 0.2) {
-      k.add([
-        k.rect(width * 0.6, 2),
-        k.pos(W - width + 2, y + segH / 2),
-        k.color(...COLORS.LANE_LINE),
-        k.opacity(0.15),
-        k.z(3),
-      ])
-    }
-  }
-
-  // Soft glow rectangles at wall edges (neon accent strips)
-  k.add([k.rect(6, 200), k.pos(197, 520), k.color(...COLORS.LANE_GLOW), k.opacity(0.12), k.z(4)])
-  k.add([k.rect(6, 200), k.pos(397, 520), k.color(...COLORS.LANE_GLOW), k.opacity(0.12), k.z(4)])
-
-  // Ambient glow spots on walls (soft colored circles that pulse) - using rects as approximation
-  for (let i = 0; i < 4; i++) {
-    const gy = 300 + i * 110
-    // Left wall glow
-    const leftGlow = k.add([
-      k.rect(30, 30, { radius: 15 }),
-      k.pos(10 + i * 8, gy),
-      k.color(...COLORS.PARTICLE_PINK),
-      k.opacity(0.06),
-      k.z(3),
-    ])
-    leftGlow.onUpdate(() => {
-      leftGlow.opacity = 0.04 + Math.sin(k.time() * 1.5 + i * 1.2) * 0.03
-    })
-    // Right wall glow
-    const rightGlow = k.add([
-      k.rect(30, 30, { radius: 15 }),
-      k.pos(W - 40 - i * 8, gy),
-      k.color(...COLORS.PARTICLE_CYAN),
-      k.opacity(0.06),
-      k.z(3),
-    ])
-    rightGlow.onUpdate(() => {
-      rightGlow.opacity = 0.04 + Math.sin(k.time() * 1.5 + i * 1.2 + 1) * 0.03
-    })
-  }
-}
-
-function spawnSpeedLine(k: KAPLAYCtx, W: number, H: number) {
-  const side = Math.random() > 0.5 ? 0 : 1
-  const x = side === 0 ? k.rand(15, 70) : k.rand(W - 70, W - 15)
-  k.add([
-    k.rect(2, k.rand(40, 90)),
-    k.pos(x, k.rand(300, H - 100)),
-    k.color(...COLORS.SPEED_LINE),
-    k.opacity(0.15),
-    k.anchor('center'),
-    k.move(k.DOWN, k.rand(300, 500)),
-    k.lifespan(0.3, { fade: 0.2 }),
-    k.z(90),
-  ])
-}
-
-async function submitScore(score: number) {
-  try {
-    await fetch('/api/submit-score', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ score }),
-    })
-  } catch {
-    // Silent fail
-  }
 }

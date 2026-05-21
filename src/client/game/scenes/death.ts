@@ -1,100 +1,103 @@
 import type { KAPLAYCtx } from 'kaplay'
 import { GAME_CONFIG } from '../config'
 
-const { COLORS } = GAME_CONFIG
-
-interface DeathData {
-  score: number
-  highScore: number
-  isNewHighScore: boolean
-}
+const C = GAME_CONFIG.COLORS
 
 export function createDeathScene(k: KAPLAYCtx) {
-  k.scene('death', (rawData?: DeathData) => {
-    const W = GAME_CONFIG.WIDTH
-    const H = GAME_CONFIG.HEIGHT
+  k.scene('death', (params: { score?: number; coins?: number; isNewHigh?: boolean }) => {
+    const score = params?.score ?? 0
+    const coins = params?.coins ?? 0
+    const isNewHigh = params?.isNewHigh ?? false
 
-    // Safe defaults
-    const data: DeathData = {
-      score: rawData?.score ?? 0,
-      highScore: rawData?.highScore ?? 0,
-      isNewHighScore: rawData?.isNewHighScore ?? false,
-    }
-
-    const { score, highScore, isNewHighScore } = data
-
-    // Dark purple overlay background
-    k.add([k.rect(W, H), k.pos(0, 0), k.color(12, 8, 30), k.z(0)])
-
-    // Subtle glow behind score
+    // Dark overlay
     k.add([
-      k.rect(200, 100, { radius: 50 }),
-      k.pos(W / 2, H / 2 - 60),
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
+      k.pos(0, 0),
+      k.color(10, 8, 6),
+      k.opacity(0.9),
+      k.z(0),
+    ])
+
+    // Score
+    k.add([
+      k.text('GAME OVER', { size: 36 }),
+      k.pos(GAME_CONFIG.WIDTH / 2, 280),
       k.anchor('center'),
-      k.color(...COLORS.TEXT_CYAN),
-      k.opacity(0.05),
+      k.color(...C.TEXT_WHITE),
       k.z(10),
     ])
 
-    // Big score number
-    const scoreDisplay = k.add([
-      k.text(score.toString(), { size: 72 }),
-      k.pos(W / 2, H / 2 - 60),
-      k.anchor('center'),
-      k.color(...COLORS.TEXT_WHITE),
-      k.scale(0),
-      k.z(12),
-    ])
-    k.tween(0, 1, 0.4, (v: number) => {
-      if (scoreDisplay.exists()) scoreDisplay.scaleTo(v)
-    }, k.easings.easeOutBack)
-
     k.add([
-      k.text('points', { size: 20 }),
-      k.pos(W / 2, H / 2 - 10),
+      k.text(`Score: ${score}`, { size: 28 }),
+      k.pos(GAME_CONFIG.WIDTH / 2, 340),
       k.anchor('center'),
-      k.color(140, 120, 180),
-      k.z(12),
+      k.color(...C.TEXT_GOLD),
+      k.scale(1),
+      k.z(10),
     ])
 
-    // High score display
-    if (isNewHighScore) {
+    if (isNewHigh) {
       k.add([
         k.text('NEW BEST!', { size: 22 }),
-        k.pos(W / 2, H / 2 + 30),
+        k.pos(GAME_CONFIG.WIDTH / 2, 380),
         k.anchor('center'),
-        k.color(...COLORS.TEXT_GOLD),
-        k.z(12),
-      ])
-    } else {
-      k.add([
-        k.text(`Best: ${highScore}`, { size: 18 }),
-        k.pos(W / 2, H / 2 + 30),
-        k.anchor('center'),
-        k.color(140, 120, 180),
-        k.z(12),
+        k.color(...C.COMBO_TEXT),
+        k.z(10),
       ])
     }
 
-    // TAP TO PLAY button (cyan)
+    k.add([
+      k.text(`Coins: ${coins}`, { size: 20 }),
+      k.pos(GAME_CONFIG.WIDTH / 2, 420),
+      k.anchor('center'),
+      k.color(...C.TEXT_GOLD),
+      k.z(10),
+    ])
+
+    // TAP TO PLAY
     const tapText = k.add([
       k.text('TAP TO PLAY', { size: 24 }),
-      k.pos(W / 2, H / 2 + 100),
+      k.pos(GAME_CONFIG.WIDTH / 2, 520),
       k.anchor('center'),
-      k.color(...COLORS.TEXT_CYAN),
+      k.color(...C.TEXT_WHITE),
       k.opacity(1),
-      k.z(12),
+      k.scale(1),
+      k.z(10),
     ])
+
+    let tapPulse = 0
     tapText.onUpdate(() => {
-      tapText.opacity = 0.5 + Math.sin(k.time() * 4) * 0.5
+      tapPulse += k.dt() * 3
+      tapText.opacity = 0.5 + Math.sin(tapPulse) * 0.5
     })
 
-    // Delay before accepting input
-    let canRestart = false
-    k.wait(0.4, () => { canRestart = true })
+    // Restart on input
+    let canRestart = true
+    k.onKeyPress(() => {
+      if (canRestart) {
+        canRestart = false
+        k.go('game')
+      }
+    })
+    k.onMousePress(() => {
+      if (canRestart) {
+        canRestart = false
+        k.go('game')
+      }
+    })
+    k.onTouchStart(() => {
+      if (canRestart) {
+        canRestart = false
+        k.go('game')
+      }
+    })
 
-    k.onClick(() => { if (canRestart) k.go('game') })
-    k.onKeyPress(() => { if (canRestart) k.go('game') })
-    k.onTouchStart(() => { if (canRestart) k.go('game') })
+    // Auto-restart after 2s
+    k.wait(2.0, () => {
+      if (canRestart) {
+        canRestart = false
+        k.go('game')
+      }
+    })
   })
 }

@@ -1,108 +1,100 @@
+import type { KAPLAYCtx } from 'kaplay'
 import { GAME_CONFIG } from '../config'
+import { createCoin } from '../objects/collectible'
+import { createObstacle, type ObstacleType } from '../objects/obstacle'
 
-export type ObstacleType = 'barrier' | 'low_beam' | 'pillar'
-export type SpawnableType = ObstacleType | 'coin'
+type SpawnType = 'coin' | 'stone_wall' | 'low_beam' | 'pillar'
 
-export interface SpawnEvent {
-  type: SpawnableType
-  lane: number
-}
-
-// Coin patterns (lines of 3)
-const COIN_LINE_PATTERNS: SpawnEvent[][] = [
-  [{ type: 'coin', lane: 0 }],
-  [{ type: 'coin', lane: 1 }],
-  [{ type: 'coin', lane: 2 }],
-  [{ type: 'coin', lane: 0 }, { type: 'coin', lane: 1 }, { type: 'coin', lane: 2 }],
-]
-
-// Obstacle patterns
-const OBSTACLE_PATTERNS: SpawnEvent[][] = [
-  // Single obstacles
-  [{ type: 'barrier', lane: 1 }],
-  [{ type: 'barrier', lane: 0 }],
-  [{ type: 'barrier', lane: 2 }],
-  [{ type: 'low_beam', lane: 1 }],
-  [{ type: 'low_beam', lane: 0 }],
-  [{ type: 'low_beam', lane: 2 }],
-  [{ type: 'pillar', lane: 0 }],
-  [{ type: 'pillar', lane: 2 }],
-  // Two obstacles blocking two lanes
-  [{ type: 'barrier', lane: 0 }, { type: 'barrier', lane: 1 }],
-  [{ type: 'barrier', lane: 1 }, { type: 'barrier', lane: 2 }],
-  [{ type: 'pillar', lane: 0 }, { type: 'pillar', lane: 2 }],
-  // Obstacle + coin reward
-  [{ type: 'barrier', lane: 0 }, { type: 'coin', lane: 2 }],
-  [{ type: 'barrier', lane: 2 }, { type: 'coin', lane: 0 }],
-  [{ type: 'low_beam', lane: 1 }, { type: 'coin', lane: 0 }],
-  [{ type: 'pillar', lane: 0 }, { type: 'coin', lane: 1 }],
-]
-
-export function createSpawnerSystem() {
-  let obstacleTimer = 0
+export function createSpawnerSystem(k: KAPLAYCtx) {
+  let spawnTimer = 0
   let coinTimer = 0
   let gameTime = 0
-  let coinLineCount = 0
-  let coinLineLane = 1
+  let currentSpawnInterval = GAME_CONFIG.INITIAL_SPAWN_INTERVAL
+  let lastObstacleLane = -1
+
+  function getRandomLane(): number {
+    return Math.floor(k.rand(0, 3))
+  }
+
+  function getObstacleLane(): number {
+    let lane = getRandomLane()
+    // Avoid same lane twice in a row (unless no choice)
+    let attempts = 0
+    while (lane === lastObstacleLane && attempts < 3) {
+      lane = getRandomLane()
+      attempts++
+    }
+    lastObstacleLane = lane
+    return lane
+  }
+
+  function getSpawnType(): SpawnType {
+    // First 6 seconds: only coins
+    if (gameTime < 6) return 'coin'
+
+    const roll = k.rand(0, 1)
+    if (roll < 0.35) return 'coin'
+    if (roll < 0.6) return 'stone_wall'
+    if (roll < 0.8) return 'low_beam'
+    return 'pillar'
+  }
+
+  function spawnCoinLine(lane: number, count: number) {
+    // Spawn a line of coins at slight delays
+    for (let i = 0; i < count; i++) {
+      k.wait(i * 0.3, () => {
+        createCoin(k, lane)
+      })
+    }
+  }
 
   return {
-    update(dt: number, speed: number, _score: number): SpawnEvent[] {
+    update(dt: number, speed: number) {
       gameTime += dt
-      obstacleTimer += dt
-      coinTimer += dt
 
-      const events: SpawnEvent[] = []
-
-      // Calculate dynamic intervals
-      const obstacleInterval = Math.max(
+      // Update spawn interval based on time (gets tighter)
+      currentSpawnInterval = Math.max(
         GAME_CONFIG.MIN_SPAWN_INTERVAL,
-        GAME_CONFIG.INITIAL_SPAWN_INTERVAL - (gameTime * 0.01)
+        GAME_CONFIG.INITIAL_SPAWN_INTERVAL - gameTime * 0.01
       )
-      const coinInterval = Math.max(0.6, 1.0 - (speed * 0.03))
 
-      // Coin spawning (frequent)
-      if (coinTimer >= coinInterval) {
-        coinTimer = 0
+      // Main spawn timer
+      spawnTimer += dt
+      if (spawnTimer >= currentSpawnInterval) {
+        spawnTimer = 0
 
-        // If we're in a coin line, continue it
-        if (coinLineCount > 0) {
-          events.push({ type: 'coin', lane: coinLineLane })
-          coinLineCount--
-        } else {
-          // Start a new coin pattern
-          if (Math.random() < 0.4) {
-            // Start a line of 3 coins in one lane
-            coinLineLane = Math.floor(Math.random() * 3)
-            coinLineCount = 2 // will spawn 2 more after this one
-            events.push({ type: 'coin', lane: coinLineLane })
+        const type = getSpawnType()
+        const lane = type === 'coin' ? getRandomLane() : getObstacleLane()
+
+        if (type === 'coin') {
+          // Sometimes spawn a line of 2-3 coins
+          const lineCount = k.rand(0, 1) < 0.4 ? Math.floor(k.rand(2, 4)) : 1
+          if (lineCount > 1) {
+            spawnCoinLine(lane, lineCount)
           } else {
-            // Single coin or row
-            const pattern = COIN_LINE_PATTERNS[Math.floor(Math.random() * COIN_LINE_PATTERNS.length)]
-            if (pattern) {
-              events.push(...pattern)
-            }
+            createCoin(k, lane)
           }
+        } else {
+          createObstacle(k, lane, type as ObstacleType)
         }
       }
 
-      // Obstacle spawning (first 5 seconds: only coins)
-      if (gameTime > 5 && obstacleTimer >= obstacleInterval) {
-        obstacleTimer = 0
-        const pattern = OBSTACLE_PATTERNS[Math.floor(Math.random() * OBSTACLE_PATTERNS.length)]
-        if (pattern) {
-          events.push(...pattern)
+      // Extra coin spawning between obstacles
+      coinTimer += dt
+      if (coinTimer >= GAME_CONFIG.COIN_SPAWN_INTERVAL && gameTime > 2) {
+        coinTimer = 0
+        if (k.rand(0, 1) < 0.5) {
+          createCoin(k, getRandomLane())
         }
       }
-
-      return events
     },
 
     reset() {
-      obstacleTimer = 0
+      spawnTimer = 0
       coinTimer = 0
       gameTime = 0
-      coinLineCount = 0
-      coinLineLane = 1
-    }
+      currentSpawnInterval = GAME_CONFIG.INITIAL_SPAWN_INTERVAL
+      lastObstacleLane = -1
+    },
   }
 }

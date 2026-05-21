@@ -12,89 +12,94 @@ export const GAME_CONFIG = {
 
   // Player
   PLAYER_Y: 650,
-  PLAYER_WIDTH: 45,
-  PLAYER_HEIGHT: 65,
-  LANE_SWITCH_SPEED: 0.3, // Very snappy
+  PLAYER_WIDTH: 38,
+  PLAYER_HEIGHT: 60,
+  LANE_SWITCH_SPEED: 0.25,
 
-  // Speed settings
-  INITIAL_SPEED: 4.5,
-  MAX_SPEED: 11,
-  SPEED_INCREASE_RATE: 0.04,
+  // Speed settings - SLOW start, gradual ramp
+  INITIAL_SPEED: 2.8,
+  MAX_SPEED: 7,
+  SPEED_INCREASE_RATE: 0.02,
 
   // Spawning
-  INITIAL_SPAWN_INTERVAL: 1.2,
-  MIN_SPAWN_INTERVAL: 0.5,
-  COIN_SPAWN_INTERVAL: 0.6,
+  INITIAL_SPAWN_INTERVAL: 1.4,
+  MIN_SPAWN_INTERVAL: 0.55,
+  COIN_SPAWN_INTERVAL: 0.8,
 
   // Scoring
-  SCORE_PER_SECOND: 10,
+  SCORE_PER_SECOND: 8,
   COIN_SCORE: 5,
 
   // Jump / Slide
-  JUMP_DURATION: 0.45,
+  JUMP_DURATION: 0.5,
   SLIDE_DURATION: 0.55,
 
   // Road animation
-  ROAD_LINE_COUNT: 12,
-  ROAD_LINE_SPEED_MULT: 150,
+  ROAD_LINE_COUNT: 8,
+  ROAD_LINE_SPEED_MULT: 100,
 
   // Combo system
   COMBO_THRESHOLD: 5,
   MAX_MULTIPLIER: 5,
 
-  // Colors - Premium Neon Depths palette
+  // Colors - Clean Blocky: warm earth/stone tunnel
   COLORS: {
-    // Background - deep navy/purple gradient
-    BG_TOP: [12, 8, 30] as [number, number, number],
-    BG_MID: [18, 14, 45] as [number, number, number],
-    BG_BOTTOM: [25, 20, 55] as [number, number, number],
+    // Background - warm dark browns
+    BG_TOP: [20, 16, 12] as [number, number, number],
+    BG_MID: [30, 24, 18] as [number, number, number],
+    BG_BOTTOM: [40, 32, 24] as [number, number, number],
 
-    // Track - dark with subtle purple
-    TRACK_TOP: [20, 16, 40] as [number, number, number],
-    TRACK_BOTTOM: [35, 28, 60] as [number, number, number],
+    // Track - dark stone floor
+    TRACK_TOP: [35, 28, 20] as [number, number, number],
+    TRACK_BOTTOM: [50, 40, 30] as [number, number, number],
 
-    // Walls - dark purple with depth
-    WALL_DARK: [15, 10, 35] as [number, number, number],
-    WALL_LIGHT: [30, 22, 55] as [number, number, number],
+    // Walls - dark stone brown
+    WALL_DARK: [25, 20, 15] as [number, number, number],
+    WALL_LIGHT: [55, 44, 33] as [number, number, number],
 
-    // Lane lines - NEON CYAN glow
-    LANE_LINE: [0, 255, 220] as [number, number, number],
-    LANE_GLOW: [0, 200, 180] as [number, number, number],
+    // Lane/road lines - warm cream/tan
+    LANE_LINE: [180, 160, 120] as [number, number, number],
+    LANE_GLOW: [140, 120, 90] as [number, number, number],
 
-    // Player - vibrant teal with glow
-    PLAYER_BODY: [0, 220, 200] as [number, number, number],
-    PLAYER_HEAD: [230, 190, 160] as [number, number, number],
-    PLAYER_HAIR: [255, 140, 50] as [number, number, number],
-    PLAYER_LEGS: [0, 160, 150] as [number, number, number],
-    PLAYER_GLOW: [0, 255, 220] as [number, number, number],
+    // Player - blocky character
+    PLAYER_BODY: [60, 180, 170] as [number, number, number],
+    PLAYER_HEAD: [220, 180, 150] as [number, number, number],
+    PLAYER_HAIR: [100, 70, 40] as [number, number, number],
+    PLAYER_LEGS: [40, 60, 100] as [number, number, number],
+    PLAYER_EYES: [20, 20, 20] as [number, number, number],
 
-    // Coins - BRIGHT GOLD with warm glow
-    COIN: [255, 210, 0] as [number, number, number],
-    COIN_GLOW: [255, 180, 0] as [number, number, number],
-    COIN_SHINE: [255, 255, 200] as [number, number, number],
+    // Coins - bright gold
+    COIN: [255, 200, 40] as [number, number, number],
+    COIN_DARK: [200, 150, 20] as [number, number, number],
+    COIN_SHINE: [255, 255, 220] as [number, number, number],
 
-    // Obstacles - HOT MAGENTA/RED
-    OBSTACLE_MAIN: [255, 40, 80] as [number, number, number],
-    OBSTACLE_DARK: [180, 20, 50] as [number, number, number],
-    OBSTACLE_GLOW: [255, 60, 100] as [number, number, number],
-    OBSTACLE_STRIPE: [255, 200, 0] as [number, number, number],
-    OBSTACLE_STRIPE_DARK: [30, 10, 20] as [number, number, number],
-    OBSTACLE_BEAM: [60, 20, 50] as [number, number, number],
-    OBSTACLE_BEAM_DARK: [40, 10, 35] as [number, number, number],
+    // Obstacles - stone/danger
+    OBSTACLE_STONE: [120, 110, 100] as [number, number, number],
+    OBSTACLE_STONE_DARK: [80, 72, 65] as [number, number, number],
+    OBSTACLE_BEAM: [100, 80, 60] as [number, number, number],
+    OBSTACLE_BEAM_DARK: [70, 55, 40] as [number, number, number],
+    OBSTACLE_PILLAR: [180, 50, 50] as [number, number, number],
+    OBSTACLE_STRIPE: [220, 180, 0] as [number, number, number],
+    OBSTACLE_STRIPE_DARK: [30, 30, 30] as [number, number, number],
 
-    // Effects
-    PARTICLE_CYAN: [0, 255, 220] as [number, number, number],
-    PARTICLE_GOLD: [255, 220, 80] as [number, number, number],
-    PARTICLE_PINK: [255, 80, 150] as [number, number, number],
-    SPEED_LINE: [100, 200, 255] as [number, number, number],
+    // Torch/ambient
+    TORCH_FLAME: [255, 160, 40] as [number, number, number],
+    TORCH_GLOW: [255, 120, 20] as [number, number, number],
+
+    // Particles
+    PARTICLE_DUST: [140, 110, 70] as [number, number, number],
+    PARTICLE_GOLD: [255, 200, 60] as [number, number, number],
+    PARTICLE_STONE: [100, 90, 80] as [number, number, number],
+
+    // Speed lines
+    SPEED_LINE: [180, 160, 120] as [number, number, number],
 
     // UI
     TEXT_WHITE: [255, 255, 255] as [number, number, number],
-    TEXT_GOLD: [255, 210, 0] as [number, number, number],
-    TEXT_CYAN: [0, 255, 220] as [number, number, number],
-    COMBO_TEXT: [255, 100, 180] as [number, number, number],
-    BUTTON_GREEN: [0, 220, 120] as [number, number, number],
-    BUTTON_GLOW: [0, 180, 100] as [number, number, number],
+    TEXT_GOLD: [255, 210, 40] as [number, number, number],
+    COMBO_TEXT: [255, 180, 60] as [number, number, number],
+    BUTTON_GREEN: [60, 180, 80] as [number, number, number],
+    BUTTON_GREEN_DARK: [40, 140, 60] as [number, number, number],
   }
 }
 
