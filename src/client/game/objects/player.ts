@@ -17,6 +17,19 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
     'player',
   ])
 
+  // Soft GLOW RECT behind the player (larger, semi-transparent cyan)
+  const glowRect = player.add([
+    k.rect(70, 90, { radius: 35 }),
+    k.pos(-35, -80),
+    k.color(...COLORS.PLAYER_GLOW),
+    k.opacity(0.15),
+    k.z(-1),
+  ])
+  // Glow pulses slowly
+  glowRect.onUpdate(() => {
+    glowRect.opacity = 0.1 + Math.sin(k.time() * 2.5) * 0.05
+  })
+
   // Body (teal)
   const body = player.add([
     k.rect(GAME_CONFIG.PLAYER_WIDTH, 35),
@@ -40,6 +53,7 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
     k.color(...COLORS.PLAYER_HAIR),
     k.z(3),
   ])
+
 
   // Eyes
   player.add([k.rect(5, 5), k.pos(-10, -50), k.color(30, 30, 30), k.z(3)])
@@ -95,21 +109,22 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
       rightArm.pos.y = -33 - armSwing
     }
 
-    // Bright trail while running
+    // CYAN trail while running
     trailTimer += k.dt()
     if (playerState.current === 'running' && trailTimer > 0.1) {
       trailTimer = 0
       k.add([
         k.rect(k.rand(3, 6), k.rand(3, 6)),
         k.pos(player.pos.x + k.rand(-10, 10), player.pos.y - k.rand(2, 8)),
-        k.color(200, 240, 255),
-        k.opacity(0.4),
+        k.color(...COLORS.PARTICLE_CYAN),
+        k.opacity(0.3),
         k.anchor('center'),
         k.lifespan(0.25, { fade: 0.15 }),
         k.z(90),
       ])
     }
   })
+
 
   function jump() {
     if (playerState.current !== 'running') return
@@ -141,12 +156,12 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
       if (player.exists()) player.scaleTo(0.9, 1.1)
       k.tween(1.1, 1, 0.12, (val: number) => { if (player.exists()) player.scaleTo(1, val) }, k.easings.easeOutQuad)
 
-      // Landing sparkle
+      // Landing sparkle - CYAN colored
       for (let i = 0; i < 4; i++) {
         k.add([
           k.rect(4, 4),
           k.pos(player.pos.x + k.rand(-20, 20), GAME_CONFIG.PLAYER_Y),
-          k.color(200, 230, 255),
+          k.color(...COLORS.PARTICLE_CYAN),
           k.opacity(0.8),
           k.anchor('center'),
           k.move(k.Vec2.fromAngle(k.rand(-180, 0)), k.rand(40, 80)),
@@ -187,13 +202,14 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
   return { obj: player, state: playerState, jump, slide, setX, destroy }
 }
 
+
 export function createDeathParticles(k: KAPLAYCtx, x: number, y: number) {
   const colors: Array<[number, number, number]> = [
     COLORS.PLAYER_BODY,
     COLORS.PLAYER_HEAD,
     COLORS.PLAYER_LEGS,
     COLORS.PLAYER_HAIR,
-    [255, 100, 100],
+    COLORS.PARTICLE_PINK,
   ]
 
   for (let i = 0; i < 20; i++) {

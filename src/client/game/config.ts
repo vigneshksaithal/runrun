@@ -42,52 +42,59 @@ export const GAME_CONFIG = {
   COMBO_THRESHOLD: 5,
   MAX_MULTIPLIER: 5,
 
-  // Colors - Bright vibrant palette
+  // Colors - Premium Neon Depths palette
   COLORS: {
-    // Background - bright sky
-    SKY_TOP: [100, 180, 255] as [number, number, number],
-    SKY_MID: [130, 200, 255] as [number, number, number],
-    SKY_BOTTOM: [160, 220, 255] as [number, number, number],
+    // Background - deep navy/purple gradient
+    BG_TOP: [12, 8, 30] as [number, number, number],
+    BG_MID: [18, 14, 45] as [number, number, number],
+    BG_BOTTOM: [25, 20, 55] as [number, number, number],
 
-    // Track
-    TRACK: [80, 90, 80] as [number, number, number],
-    TRACK_LIGHT: [100, 110, 100] as [number, number, number],
-    LANE_LINE: [255, 255, 255] as [number, number, number],
+    // Track - dark with subtle purple
+    TRACK_TOP: [20, 16, 40] as [number, number, number],
+    TRACK_BOTTOM: [35, 28, 60] as [number, number, number],
 
-    // Side walls - colorful
-    WALL_LEFT: [50, 180, 140] as [number, number, number],
-    WALL_RIGHT: [50, 180, 140] as [number, number, number],
+    // Walls - dark purple with depth
+    WALL_DARK: [15, 10, 35] as [number, number, number],
+    WALL_LIGHT: [30, 22, 55] as [number, number, number],
 
-    // Player
-    PLAYER_BODY: [0, 200, 180] as [number, number, number],
-    PLAYER_HAIR: [240, 130, 40] as [number, number, number],
-    PLAYER_HEAD: [255, 220, 180] as [number, number, number],
-    PLAYER_LEGS: [60, 60, 120] as [number, number, number],
+    // Lane lines - NEON CYAN glow
+    LANE_LINE: [0, 255, 220] as [number, number, number],
+    LANE_GLOW: [0, 200, 180] as [number, number, number],
 
-    // Coins - bright gold
-    COIN: [255, 200, 0] as [number, number, number],
-    COIN_DARK: [220, 170, 0] as [number, number, number],
+    // Player - vibrant teal with glow
+    PLAYER_BODY: [0, 220, 200] as [number, number, number],
+    PLAYER_HEAD: [230, 190, 160] as [number, number, number],
+    PLAYER_HAIR: [255, 140, 50] as [number, number, number],
+    PLAYER_LEGS: [0, 160, 150] as [number, number, number],
+    PLAYER_GLOW: [0, 255, 220] as [number, number, number],
+
+    // Coins - BRIGHT GOLD with warm glow
+    COIN: [255, 210, 0] as [number, number, number],
+    COIN_GLOW: [255, 180, 0] as [number, number, number],
     COIN_SHINE: [255, 255, 200] as [number, number, number],
 
-    // Obstacles - clearly dangerous
-    BARRIER_RED: [220, 50, 40] as [number, number, number],
-    BARRIER_DARK: [160, 30, 25] as [number, number, number],
-    WARNING_YELLOW: [255, 220, 0] as [number, number, number],
-    WARNING_BLACK: [30, 30, 30] as [number, number, number],
-    BEAM_GRAY: [80, 80, 90] as [number, number, number],
-    BEAM_DARK: [50, 50, 60] as [number, number, number],
-    PILLAR_RED: [200, 40, 40] as [number, number, number],
+    // Obstacles - HOT MAGENTA/RED
+    OBSTACLE_MAIN: [255, 40, 80] as [number, number, number],
+    OBSTACLE_DARK: [180, 20, 50] as [number, number, number],
+    OBSTACLE_GLOW: [255, 60, 100] as [number, number, number],
+    OBSTACLE_STRIPE: [255, 200, 0] as [number, number, number],
+    OBSTACLE_STRIPE_DARK: [30, 10, 20] as [number, number, number],
+    OBSTACLE_BEAM: [60, 20, 50] as [number, number, number],
+    OBSTACLE_BEAM_DARK: [40, 10, 35] as [number, number, number],
 
     // Effects
-    PARTICLE_GOLD: [255, 230, 100] as [number, number, number],
-    SPARKLE: [255, 255, 255] as [number, number, number],
+    PARTICLE_CYAN: [0, 255, 220] as [number, number, number],
+    PARTICLE_GOLD: [255, 220, 80] as [number, number, number],
+    PARTICLE_PINK: [255, 80, 150] as [number, number, number],
+    SPEED_LINE: [100, 200, 255] as [number, number, number],
 
     // UI
     TEXT_WHITE: [255, 255, 255] as [number, number, number],
-    TEXT_GOLD: [255, 215, 0] as [number, number, number],
-    TEXT_SHADOW: [0, 0, 0] as [number, number, number],
-    BUTTON_GREEN: [76, 200, 80] as [number, number, number],
-    COMBO_TEXT: [255, 100, 50] as [number, number, number],
+    TEXT_GOLD: [255, 210, 0] as [number, number, number],
+    TEXT_CYAN: [0, 255, 220] as [number, number, number],
+    COMBO_TEXT: [255, 100, 180] as [number, number, number],
+    BUTTON_GREEN: [0, 220, 120] as [number, number, number],
+    BUTTON_GLOW: [0, 180, 100] as [number, number, number],
   }
 }
 

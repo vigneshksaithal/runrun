@@ -23,8 +23,18 @@ export function createDeathScene(k: KAPLAYCtx) {
 
     const { score, highScore, isNewHighScore } = data
 
-    // Dark overlay background
-    k.add([k.rect(W, H), k.pos(0, 0), k.color(20, 20, 40), k.z(0)])
+    // Dark purple overlay background
+    k.add([k.rect(W, H), k.pos(0, 0), k.color(12, 8, 30), k.z(0)])
+
+    // Subtle glow behind score
+    k.add([
+      k.rect(200, 100, { radius: 50 }),
+      k.pos(W / 2, H / 2 - 60),
+      k.anchor('center'),
+      k.color(...COLORS.TEXT_CYAN),
+      k.opacity(0.05),
+      k.z(10),
+    ])
 
     // Big score number
     const scoreDisplay = k.add([
@@ -35,13 +45,15 @@ export function createDeathScene(k: KAPLAYCtx) {
       k.scale(0),
       k.z(12),
     ])
-    k.tween(0, 1, 0.4, (v: number) => { if (scoreDisplay.exists()) scoreDisplay.scaleTo(v) }, k.easings.easeOutBack)
+    k.tween(0, 1, 0.4, (v: number) => {
+      if (scoreDisplay.exists()) scoreDisplay.scaleTo(v)
+    }, k.easings.easeOutBack)
 
     k.add([
       k.text('points', { size: 20 }),
       k.pos(W / 2, H / 2 - 10),
       k.anchor('center'),
-      k.color(180, 180, 200),
+      k.color(140, 120, 180),
       k.z(12),
     ])
 
@@ -59,17 +71,17 @@ export function createDeathScene(k: KAPLAYCtx) {
         k.text(`Best: ${highScore}`, { size: 18 }),
         k.pos(W / 2, H / 2 + 30),
         k.anchor('center'),
-        k.color(180, 180, 200),
+        k.color(140, 120, 180),
         k.z(12),
       ])
     }
 
-    // TAP TO PLAY button
+    // TAP TO PLAY button (cyan)
     const tapText = k.add([
       k.text('TAP TO PLAY', { size: 24 }),
       k.pos(W / 2, H / 2 + 100),
       k.anchor('center'),
-      k.color(...COLORS.TEXT_WHITE),
+      k.color(...COLORS.TEXT_CYAN),
       k.opacity(1),
       k.z(12),
     ])

@@ -28,21 +28,23 @@ export function createGameScene(k: KAPLAYCtx) {
     const obstacles: Obstacle[] = []
     const collectibles: Collectible[] = []
 
-    // Draw bright track background
+    // Draw dark neon track background
     drawTrackBackground(k)
 
-    // Create animated road markings
+    // Create animated road markings (neon cyan)
     const roadLines = createAnimatedRoadLines(k)
 
-    // Ambient sparkle particles (white, floating)
+    // Ambient neon particles (cyan/pink floating)
     interface SparkleObj { pos: { x: number; y: number }; opacity: number; destroy(): void }
     const sparkles: Array<{ obj: SparkleObj; vx: number; vy: number }> = []
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 14; i++) {
+      const isCyan = i % 3 !== 0
+      const color: [number, number, number] = isCyan ? COLORS.PARTICLE_CYAN : COLORS.PARTICLE_PINK
       const obj = k.add([
         k.rect(k.rand(2, 4), k.rand(2, 4)),
         k.pos(k.rand(40, W - 40), k.rand(220, H - 100)),
-        k.color(255, 255, 255),
-        k.opacity(k.rand(0.1, 0.3)),
+        k.color(...color),
+        k.opacity(k.rand(0.05, 0.2)),
         k.anchor('center'),
         k.z(95),
       ]) as unknown as SparkleObj
@@ -219,10 +221,10 @@ export function createGameScene(k: KAPLAYCtx) {
         if (sparkle.obj.pos.x < 20 || sparkle.obj.pos.x > W - 20) {
           sparkle.vx = -sparkle.vx
         }
-        sparkle.obj.opacity = 0.1 + Math.sin(k.time() * 2.5 + sparkle.obj.pos.x * 0.01) * 0.15
+        sparkle.obj.opacity = 0.05 + Math.sin(k.time() * 2.5 + sparkle.obj.pos.x * 0.01) * 0.1
       }
 
-      // Speed lines at high speed
+      // Speed lines at high speed (cyan-tinted)
       if (gameSpeed > 7) {
         if (Math.random() < 0.3) {
           spawnSpeedLine(k, W, H)
@@ -248,11 +250,11 @@ export function createGameScene(k: KAPLAYCtx) {
       // Hide player
       player.obj.hidden = true
 
-      // Flash screen red briefly (0.3s)
+      // Flash screen magenta briefly (0.3s)
       const flash = k.add([
         k.rect(W, H),
         k.pos(0, 0),
-        k.color(255, 30, 30),
+        k.color(255, 40, 80),
         k.opacity(0.4),
         k.z(300),
         k.fixed(),
@@ -269,12 +271,12 @@ export function createGameScene(k: KAPLAYCtx) {
 
       // Show score overlay after brief flash
       k.wait(0.3, () => {
-        // Dark overlay
+        // Dark purple overlay
         const overlay = k.add([
           k.rect(W, H),
           k.pos(0, 0),
-          k.color(0, 0, 0),
-          k.opacity(0.6),
+          k.color(12, 8, 30),
+          k.opacity(0.85),
           k.z(310),
           k.fixed(),
         ])
@@ -297,7 +299,7 @@ export function createGameScene(k: KAPLAYCtx) {
           k.text('points', { size: 20 }),
           k.pos(W / 2, H / 2 - 10),
           k.anchor('center'),
-          k.color(200, 200, 200),
+          k.color(140, 120, 180),
           k.z(320),
           k.fixed(),
         ])
@@ -318,18 +320,18 @@ export function createGameScene(k: KAPLAYCtx) {
             k.text('NEW BEST!', { size: 22 }),
             k.pos(W / 2, H / 2 + 60),
             k.anchor('center'),
-            k.color(255, 220, 50),
+            k.color(...COLORS.TEXT_GOLD),
             k.z(320),
             k.fixed(),
           ])
         }
 
-        // "TAP TO RESTART" text
+        // "TAP TO RESTART" text (cyan glow)
         const tapText = k.add([
           k.text('TAP TO RESTART', { size: 20 }),
           k.pos(W / 2, H / 2 + 110),
           k.anchor('center'),
-          k.color(...COLORS.TEXT_WHITE),
+          k.color(...COLORS.TEXT_CYAN),
           k.opacity(1),
           k.z(320),
           k.fixed(),
@@ -360,6 +362,7 @@ export function createGameScene(k: KAPLAYCtx) {
 // Road line objects for animation
 interface RoadLine {
   obj: ReturnType<KAPLAYCtx['add']> & { pos: { x: number; y: number }; width: number; height: number; opacity: number }
+  glowObj: ReturnType<KAPLAYCtx['add']> & { pos: { x: number; y: number }; width: number; height: number; opacity: number }
   baseY: number
   lane: number
 }
@@ -383,16 +386,27 @@ function createAnimatedRoadLines(k: KAPLAYCtx): RoadLine[] {
       const lineWidth = 2 + t * 4
       const lineHeight = 4 + t * 18
 
+      // Glow behind (wider, semi-transparent cyan)
+      const glowObj = k.add([
+        k.rect(lineWidth * 3, lineHeight * 1.4),
+        k.pos(x, y),
+        k.anchor('center'),
+        k.color(...COLORS.LANE_GLOW),
+        k.opacity(0.1 + t * 0.15),
+        k.z(4),
+      ])
+
+      // Main neon line
       const obj = k.add([
         k.rect(lineWidth, lineHeight),
         k.pos(x, y),
         k.anchor('center'),
         k.color(...COLORS.LANE_LINE),
-        k.opacity(0.3 + t * 0.4),
+        k.opacity(0.4 + t * 0.5),
         k.z(5),
       ])
 
-      lines.push({ obj, baseY: t, lane: laneDiv })
+      lines.push({ obj, glowObj, baseY: t, lane: laneDiv })
     }
   }
 
@@ -423,7 +437,14 @@ function updateRoadLines(lines: RoadLine[], speed: number, dt: number) {
     line.obj.pos.y = y
     line.obj.width = lineWidth
     line.obj.height = lineHeight
-    line.obj.opacity = 0.3 + t * 0.4
+    line.obj.opacity = 0.4 + t * 0.5
+
+    // Update glow
+    line.glowObj.pos.x = x
+    line.glowObj.pos.y = y
+    line.glowObj.width = lineWidth * 3
+    line.glowObj.height = lineHeight * 1.4
+    line.glowObj.opacity = 0.1 + t * 0.15
   }
 }
 
@@ -432,13 +453,13 @@ function drawTrackBackground(k: KAPLAYCtx) {
   const H = GAME_CONFIG.HEIGHT
   const VP_Y = GAME_CONFIG.LANE_Y_TOP - 40
 
-  // Bright sky gradient (light blue top → medium blue bottom)
-  const skySegments = 12
+  // Dark gradient sky (deep indigo top → rich purple bottom)
+  const skySegments = 14
   for (let i = 0; i < skySegments; i++) {
     const t = i / skySegments
-    const r = 80 + t * 40
-    const g = 160 + t * 40
-    const b = 255
+    const r = 12 + t * 10
+    const g = 8 + t * 10
+    const b = 30 + t * 20
     k.add([
       k.rect(W, Math.ceil(VP_Y / skySegments) + 1),
       k.pos(0, i * (VP_Y / skySegments)),
@@ -447,14 +468,14 @@ function drawTrackBackground(k: KAPLAYCtx) {
     ])
   }
 
-  // Track area - dark green-gray ground
+  // Track area - dark purple-tinted ground with depth gradient
   const trackRange = H - VP_Y
-  const trackSegments = 16
+  const trackSegments = 18
   for (let i = 0; i < trackSegments; i++) {
     const t = i / trackSegments
-    const r = 60 + t * 30
-    const g = 70 + t * 30
-    const b = 60 + t * 25
+    const r = 20 + t * 15
+    const g = 16 + t * 12
+    const b = 40 + t * 20
     k.add([
       k.rect(W, Math.ceil(trackRange / trackSegments) + 1),
       k.pos(0, VP_Y + i * (trackRange / trackSegments)),
@@ -463,7 +484,7 @@ function drawTrackBackground(k: KAPLAYCtx) {
     ])
   }
 
-  // Side walls (left) - teal/green with perspective
+  // Side walls (left) - deep purple with subtle lighter accents
   const wallSegments = 16
   for (let i = 0; i < wallSegments; i++) {
     const t = i / wallSegments
@@ -474,17 +495,17 @@ function drawTrackBackground(k: KAPLAYCtx) {
     k.add([
       k.rect(width, segH),
       k.pos(0, y),
-      k.color(30 + t * 30, 140 + t * 40, 120 + t * 20),
+      k.color(15 + t * 15, 10 + t * 12, 35 + t * 20),
       k.z(2),
     ])
 
-    // Color stripe accents
+    // Neon accent strips on walls (subtle cyan glow)
     if (i % 4 === 0 && t > 0.2) {
       k.add([
-        k.rect(width * 0.6, 3),
+        k.rect(width * 0.6, 2),
         k.pos(2, y + segH / 2),
-        k.color(0, 220, 180),
-        k.opacity(0.4),
+        k.color(...COLORS.LANE_LINE),
+        k.opacity(0.15),
         k.z(3),
       ])
     }
@@ -500,24 +521,51 @@ function drawTrackBackground(k: KAPLAYCtx) {
     k.add([
       k.rect(width, segH),
       k.pos(W - width, y),
-      k.color(30 + t * 30, 140 + t * 40, 120 + t * 20),
+      k.color(15 + t * 15, 10 + t * 12, 35 + t * 20),
       k.z(2),
     ])
 
     if (i % 4 === 0 && t > 0.2) {
       k.add([
-        k.rect(width * 0.6, 3),
+        k.rect(width * 0.6, 2),
         k.pos(W - width + 2, y + segH / 2),
-        k.color(0, 220, 180),
-        k.opacity(0.4),
+        k.color(...COLORS.LANE_LINE),
+        k.opacity(0.15),
         k.z(3),
       ])
     }
   }
 
-  // Colored lane markers at bottom (visible colored strips)
-  k.add([k.rect(4, 200), k.pos(200, 520), k.color(0, 200, 150), k.opacity(0.3), k.z(4)])
-  k.add([k.rect(4, 200), k.pos(400, 520), k.color(0, 200, 150), k.opacity(0.3), k.z(4)])
+  // Soft glow rectangles at wall edges (neon accent strips)
+  k.add([k.rect(6, 200), k.pos(197, 520), k.color(...COLORS.LANE_GLOW), k.opacity(0.12), k.z(4)])
+  k.add([k.rect(6, 200), k.pos(397, 520), k.color(...COLORS.LANE_GLOW), k.opacity(0.12), k.z(4)])
+
+  // Ambient glow spots on walls (soft colored circles that pulse) - using rects as approximation
+  for (let i = 0; i < 4; i++) {
+    const gy = 300 + i * 110
+    // Left wall glow
+    const leftGlow = k.add([
+      k.rect(30, 30, { radius: 15 }),
+      k.pos(10 + i * 8, gy),
+      k.color(...COLORS.PARTICLE_PINK),
+      k.opacity(0.06),
+      k.z(3),
+    ])
+    leftGlow.onUpdate(() => {
+      leftGlow.opacity = 0.04 + Math.sin(k.time() * 1.5 + i * 1.2) * 0.03
+    })
+    // Right wall glow
+    const rightGlow = k.add([
+      k.rect(30, 30, { radius: 15 }),
+      k.pos(W - 40 - i * 8, gy),
+      k.color(...COLORS.PARTICLE_CYAN),
+      k.opacity(0.06),
+      k.z(3),
+    ])
+    rightGlow.onUpdate(() => {
+      rightGlow.opacity = 0.04 + Math.sin(k.time() * 1.5 + i * 1.2 + 1) * 0.03
+    })
+  }
 }
 
 function spawnSpeedLine(k: KAPLAYCtx, W: number, H: number) {
@@ -526,8 +574,8 @@ function spawnSpeedLine(k: KAPLAYCtx, W: number, H: number) {
   k.add([
     k.rect(2, k.rand(40, 90)),
     k.pos(x, k.rand(300, H - 100)),
-    k.color(200, 230, 255),
-    k.opacity(0.2),
+    k.color(...COLORS.SPEED_LINE),
+    k.opacity(0.15),
     k.anchor('center'),
     k.move(k.DOWN, k.rand(300, 500)),
     k.lifespan(0.3, { fade: 0.2 }),

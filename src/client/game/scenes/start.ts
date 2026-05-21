@@ -8,12 +8,12 @@ export function createStartScene(k: KAPLAYCtx) {
     const W = GAME_CONFIG.WIDTH
     const H = GAME_CONFIG.HEIGHT
 
-    // Background - bright sky gradient (sky blue → teal)
+    // Background - dark gradient (deep indigo → rich purple)
     for (let i = 0; i < 15; i++) {
       const t = i / 15
-      const r = 80 + t * 20
-      const g = 170 + t * 30
-      const b = 255 - t * 30
+      const r = 12 + t * 13
+      const g = 8 + t * 12
+      const b = 30 + t * 25
       k.add([
         k.rect(W, Math.ceil(H / 15) + 1),
         k.pos(0, i * (H / 15)),
@@ -22,13 +22,15 @@ export function createStartScene(k: KAPLAYCtx) {
       ])
     }
 
-    // Floating sparkle particles in background
-    for (let i = 0; i < 15; i++) {
+    // Floating neon particles (cyan and gold)
+    for (let i = 0; i < 18; i++) {
+      const isCyan = i % 3 !== 2
+      const color: [number, number, number] = isCyan ? COLORS.PARTICLE_CYAN : COLORS.PARTICLE_GOLD
       const sparkle = k.add([
         k.rect(k.rand(2, 5), k.rand(2, 5)),
         k.pos(k.rand(30, W - 30), k.rand(60, H - 60)),
-        k.color(255, 255, 255),
-        k.opacity(k.rand(0.1, 0.35)),
+        k.color(...color),
+        k.opacity(k.rand(0.05, 0.25)),
         k.anchor('center'),
         k.z(2),
       ])
@@ -40,36 +42,39 @@ export function createStartScene(k: KAPLAYCtx) {
         if (sparkle.pos.y < 40) sparkle.pos.y = H - 60
         if (sparkle.pos.x < 20) sparkle.pos.x = W - 30
         if (sparkle.pos.x > W - 20) sparkle.pos.x = 30
-        sparkle.opacity = 0.1 + Math.sin(k.time() * 2 + i * 0.5) * 0.2
+        sparkle.opacity = 0.05 + Math.sin(k.time() * 2 + i * 0.5) * 0.15
       })
     }
 
-    // Animated background track lines (moving slowly - alive feel)
+    // Animated background track lines (neon cyan, slowly moving)
     for (let i = 0; i < 10; i++) {
       const line = k.add([
         k.rect(3, 40 + Math.random() * 50),
         k.pos(W / 2 + (i - 5) * 40, 100 + i * 60),
-        k.color(255, 255, 255),
-        k.opacity(0.12),
+        k.color(...COLORS.LANE_LINE),
+        k.opacity(0.06),
         k.anchor('center'),
         k.z(1),
       ])
       line.onUpdate(() => {
         line.pos.y += k.dt() * 60
         if (line.pos.y > H + 50) line.pos.y = -50
-        line.opacity = 0.06 + Math.sin(k.time() * 1.5 + i) * 0.06
+        line.opacity = 0.03 + Math.sin(k.time() * 1.5 + i) * 0.04
       })
     }
 
-    // Title "BLOCKDASH" - big bold white with shadow
+
+    // Cyan glow behind title (larger semi-transparent text offset)
     k.add([
-      k.text('BLOCKDASH', { size: 58 }),
-      k.pos(W / 2 + 3, 133),
+      k.text('BLOCKDASH', { size: 62 }),
+      k.pos(W / 2, 130),
       k.anchor('center'),
-      k.color(0, 0, 0),
-      k.opacity(0.4),
+      k.color(...COLORS.LANE_LINE),
+      k.opacity(0.12),
       k.z(9),
     ])
+
+    // Title "BLOCKDASH" - white with glow
     const title = k.add([
       k.text('BLOCKDASH', { size: 58 }),
       k.pos(W / 2, 130),
@@ -82,21 +87,21 @@ export function createStartScene(k: KAPLAYCtx) {
       title.scaleTo(1 + Math.sin(k.time() * 1.5) * 0.02)
     })
 
-    // Subtitle
+    // Subtitle - soft cyan
     k.add([
       k.text('How far can you dash?', { size: 16 }),
       k.pos(W / 2, 175),
       k.anchor('center'),
-      k.color(220, 240, 255),
-      k.opacity(0.8),
+      k.color(...COLORS.TEXT_CYAN),
+      k.opacity(0.7),
       k.z(10),
     ])
 
-    // Subtle glow behind player
+    // Large soft glow rect behind player
     const playerGlow = k.add([
-      k.rect(90, 110, { radius: 45 }),
-      k.pos(W / 2 - 45, 280),
-      k.color(0, 200, 180),
+      k.rect(100, 120, { radius: 50 }),
+      k.pos(W / 2 - 50, 270),
+      k.color(...COLORS.PLAYER_GLOW),
       k.opacity(0.08),
       k.z(15),
     ])
@@ -129,9 +134,10 @@ export function createStartScene(k: KAPLAYCtx) {
       playerGroup.pos.y = 340 + Math.sin(k.time() * 2.5) * 8
     })
 
-    // Track lines behind player
-    k.add([k.rect(3, 160), k.pos(W / 2 - 85, 390), k.color(255, 255, 255), k.opacity(0.15), k.z(5)])
-    k.add([k.rect(3, 160), k.pos(W / 2 + 85, 390), k.color(255, 255, 255), k.opacity(0.15), k.z(5)])
+
+    // Track lines behind player (neon cyan)
+    k.add([k.rect(3, 160), k.pos(W / 2 - 85, 390), k.color(...COLORS.LANE_LINE), k.opacity(0.1), k.z(5)])
+    k.add([k.rect(3, 160), k.pos(W / 2 + 85, 390), k.color(...COLORS.LANE_LINE), k.opacity(0.1), k.z(5)])
 
     // High score display
     const highScore = getHighScore()
@@ -145,8 +151,21 @@ export function createStartScene(k: KAPLAYCtx) {
       ])
     }
 
-    // Big green "PLAY" button
+    // Button glow halo behind
     const btnY = 530
+    const btnGlow = k.add([
+      k.rect(220, 72, { radius: 14 }),
+      k.pos(W / 2, btnY),
+      k.anchor('center'),
+      k.color(...COLORS.BUTTON_GLOW),
+      k.opacity(0.15),
+      k.z(9),
+    ])
+    btnGlow.onUpdate(() => {
+      btnGlow.opacity = 0.1 + Math.sin(k.time() * 3) * 0.06
+    })
+
+    // Big green "PLAY" button
     const btn = k.add([
       k.rect(200, 60, { radius: 10 }),
       k.pos(W / 2, btnY),
@@ -166,20 +185,20 @@ export function createStartScene(k: KAPLAYCtx) {
       btn.scaleTo(1 + Math.sin(k.time() * 3) * 0.04)
     })
 
-    // Controls hint
+    // Controls hint (subtle cyan)
     k.add([
       k.text('Swipe or Arrow Keys', { size: 14 }),
       k.pos(W / 2, 600),
       k.anchor('center'),
-      k.color(220, 240, 255),
-      k.opacity(0.6),
+      k.color(...COLORS.TEXT_CYAN),
+      k.opacity(0.5),
       k.z(10),
     ])
     k.add([
       k.text('< > Move  |  Up: Jump  |  Down: Slide', { size: 12 }),
       k.pos(W / 2, 625),
       k.anchor('center'),
-      k.color(200, 220, 240),
+      k.color(140, 120, 180),
       k.opacity(0.4),
       k.z(10),
     ])
