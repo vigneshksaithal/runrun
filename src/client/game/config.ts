@@ -1,75 +1,90 @@
 export const GAME_CONFIG = {
-  // Canvas dimensions (will be stretched to fit)
-  WIDTH: 400,
-  HEIGHT: 700,
+  // Canvas dimensions - wider for Reddit full-width posts
+  WIDTH: 600,
+  HEIGHT: 800,
 
   // Lane configuration
   LANES: 3,
-  LANE_WIDTH: 80,
-  LANE_Y_BOTTOM: 620, // Where objects are at full size (near player)
-  LANE_Y_TOP: 200, // Vanishing point Y
-  VANISHING_POINT_X: 200, // Center of screen
+  LANE_WIDTH: 100,
+  LANE_Y_BOTTOM: 700, // Where objects are at full size (near player)
+  LANE_Y_TOP: 220, // Vanishing point Y
+  VANISHING_POINT_X: 300, // Center of screen
 
   // Player
-  PLAYER_Y: 580,
-  PLAYER_WIDTH: 36,
-  PLAYER_HEIGHT: 56,
-  LANE_SWITCH_SPEED: 0.15, // Lerp factor
+  PLAYER_Y: 650,
+  PLAYER_WIDTH: 40,
+  PLAYER_HEIGHT: 60,
+  LANE_SWITCH_SPEED: 0.25, // Faster lerp for snappier feel
 
   // Speed settings
-  INITIAL_SPEED: 3.5,
-  MAX_SPEED: 9,
-  SPEED_INCREASE_RATE: 0.03, // Per second
+  INITIAL_SPEED: 4.0,
+  MAX_SPEED: 10,
+  SPEED_INCREASE_RATE: 0.035, // Per second
 
   // Spawning
-  INITIAL_SPAWN_INTERVAL: 1.2, // Seconds between obstacle spawns
-  MIN_SPAWN_INTERVAL: 0.5,
-  COLLECTIBLE_CHANCE: 0.35, // Chance to spawn collectible instead of obstacle
+  INITIAL_SPAWN_INTERVAL: 1.0, // Seconds between obstacle spawns
+  MIN_SPAWN_INTERVAL: 0.45,
+  COLLECTIBLE_CHANCE: 0.35,
 
   // Scoring
-  SCORE_PER_SECOND: 10,
+  SCORE_PER_SECOND: 12,
   GOLD_INGOT_SCORE: 10,
   NEAR_MISS_BONUS: 5,
-  NEAR_MISS_DISTANCE: 20,
+  NEAR_MISS_DISTANCE: 25,
 
   // Jump / Slide
-  JUMP_DURATION: 0.5,
-  SLIDE_DURATION: 0.6,
+  JUMP_DURATION: 0.45,
+  SLIDE_DURATION: 0.55,
 
-  // Colors - Overworld biome
+  // Road animation
+  ROAD_LINE_COUNT: 12,
+  ROAD_LINE_SPEED_MULT: 150,
+
+  // Colors - Dark mine tunnel Minecraft palette
   COLORS: {
-    SKY_TOP: [135, 206, 235] as [number, number, number],
-    SKY_BOTTOM: [76, 153, 0] as [number, number, number],
-    GROUND: [101, 67, 33] as [number, number, number],
-    TRACK: [80, 80, 80] as [number, number, number],
-    LANE_LINE: [180, 180, 180] as [number, number, number],
-    TUNNEL_WALL: [64, 64, 64] as [number, number, number],
-    TUNNEL_CEILING: [48, 48, 48] as [number, number, number],
+    // Background
+    SKY_TOP: [20, 18, 35] as [number, number, number],
+    SKY_MID: [30, 28, 50] as [number, number, number],
+    SKY_BOTTOM: [40, 35, 60] as [number, number, number],
+    GROUND: [55, 50, 45] as [number, number, number],
+    TRACK: [70, 65, 60] as [number, number, number],
+    TRACK_DARK: [50, 45, 40] as [number, number, number],
+    LANE_LINE: [140, 130, 120] as [number, number, number],
+    TUNNEL_WALL: [45, 38, 32] as [number, number, number],
+    TUNNEL_WALL_LIGHT: [65, 55, 45] as [number, number, number],
+    TUNNEL_CEILING: [35, 30, 28] as [number, number, number],
 
     // Player (Steve)
-    PLAYER_HEAD: [196, 164, 132] as [number, number, number],
-    PLAYER_BODY: [0, 170, 170] as [number, number, number],
-    PLAYER_LEGS: [60, 60, 120] as [number, number, number],
-    PLAYER_HAIR: [60, 30, 0] as [number, number, number],
+    PLAYER_HEAD: [200, 168, 136] as [number, number, number],
+    PLAYER_BODY: [0, 180, 180] as [number, number, number],
+    PLAYER_LEGS: [55, 55, 110] as [number, number, number],
+    PLAYER_HAIR: [70, 40, 10] as [number, number, number],
 
     // Obstacles
-    STONE: [128, 128, 128] as [number, number, number],
-    STONE_DARK: [96, 96, 96] as [number, number, number],
-    COBWEB: [220, 220, 240] as [number, number, number],
-    COBWEB_STRAND: [180, 180, 200] as [number, number, number],
-    TNT_RED: [200, 50, 50] as [number, number, number],
-    TNT_DARK: [140, 30, 30] as [number, number, number],
+    STONE: [130, 130, 130] as [number, number, number],
+    STONE_DARK: [90, 90, 90] as [number, number, number],
+    STONE_LIGHT: [155, 155, 155] as [number, number, number],
+    COBWEB: [225, 225, 240] as [number, number, number],
+    COBWEB_STRAND: [185, 185, 205] as [number, number, number],
+    TNT_RED: [210, 50, 40] as [number, number, number],
+    TNT_DARK: [150, 30, 25] as [number, number, number],
     TNT_LABEL: [255, 255, 255] as [number, number, number],
 
     // Collectibles
     GOLD: [255, 215, 0] as [number, number, number],
     GOLD_DARK: [200, 165, 0] as [number, number, number],
+    GOLD_SHINE: [255, 240, 150] as [number, number, number],
     DIAMOND: [80, 220, 255] as [number, number, number],
 
     // Effects
     PARTICLE_GOLD: [255, 230, 100] as [number, number, number],
-    SPEED_LINE: [255, 255, 255] as [number, number, number],
-    NEAR_MISS: [0, 255, 200] as [number, number, number],
+    SPEED_LINE: [200, 200, 200] as [number, number, number],
+    NEAR_MISS: [0, 255, 180] as [number, number, number],
+
+    // Torch
+    TORCH_FLAME: [255, 160, 30] as [number, number, number],
+    TORCH_GLOW: [255, 200, 60] as [number, number, number],
+    TORCH_STICK: [110, 75, 35] as [number, number, number],
 
     // UI
     TEXT_WHITE: [255, 255, 255] as [number, number, number],
@@ -90,8 +105,8 @@ export function getLaneX(lane: number): number {
 // Get the scale factor for a given Y position (for pseudo-3D)
 export function getDepthScale(y: number): number {
   const range = GAME_CONFIG.LANE_Y_BOTTOM - GAME_CONFIG.LANE_Y_TOP
-  const progress = (y - GAME_CONFIG.LANE_Y_TOP) / range
-  return 0.1 + progress * 0.9
+  const progress = Math.max(0, (y - GAME_CONFIG.LANE_Y_TOP) / range)
+  return 0.15 + progress * 0.85
 }
 
 // Get lane X position at a given depth

@@ -4,15 +4,20 @@ import { createStartScene } from './game/scenes/start'
 import { createGameScene } from './game/scenes/game'
 import { createDeathScene } from './game/scenes/death'
 
-// Initialize KaplayJS
+// Initialize KaplayJS - full screen, no letterbox for Reddit webview
 const k = kaplay({
   width: GAME_CONFIG.WIDTH,
   height: GAME_CONFIG.HEIGHT,
-  background: [26, 26, 46],
+  background: [18, 18, 32],
   stretch: true,
-  letterbox: true,
-  touchToMouse: false,
+  letterbox: false,
+  crisp: true,
+  touchToMouse: true,
+  canvas: document.createElement('canvas'),
 })
+
+// Append canvas to body
+document.body.appendChild(k.canvas)
 
 // Register scenes
 createStartScene(k)

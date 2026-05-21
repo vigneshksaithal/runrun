@@ -8,8 +8,8 @@ interface TouchState {
   startTime: number
 }
 
-const SWIPE_THRESHOLD = 30
-const SWIPE_TIME_LIMIT = 300
+const SWIPE_THRESHOLD = 25
+const SWIPE_TIME_LIMIT = 350
 
 export function createInputSystem(k: KAPLAYCtx) {
   let pendingInput: GameInput = null
@@ -26,13 +26,42 @@ export function createInputSystem(k: KAPLAYCtx) {
   k.onKeyPress('s', () => { pendingInput = 'slide' })
   k.onKeyPress('space', () => { pendingInput = 'jump' })
 
-  // Touch input
-  k.onTouchStart((pos) => {
-    touchState = {
-      startX: pos.x,
-      startY: pos.y,
-      startTime: Date.now(),
+  // Touch/mouse input via swipe detection
+  k.onMousePress(() => {
+    const pos = k.mousePos()
+    touchState = { startX: pos.x, startY: pos.y, startTime: Date.now() }
+  })
+
+  k.onMouseRelease(() => {
+    if (!touchState) return
+
+    const pos = k.mousePos()
+    const dx = pos.x - touchState.startX
+    const dy = pos.y - touchState.startY
+    const dt = Date.now() - touchState.startTime
+
+    if (dt > SWIPE_TIME_LIMIT) {
+      touchState = null
+      return
     }
+
+    const absDx = Math.abs(dx)
+    const absDy = Math.abs(dy)
+
+    if (absDx > SWIPE_THRESHOLD || absDy > SWIPE_THRESHOLD) {
+      if (absDx > absDy) {
+        pendingInput = dx > 0 ? 'right' : 'left'
+      } else {
+        pendingInput = dy < 0 ? 'jump' : 'slide'
+      }
+    }
+
+    touchState = null
+  })
+
+  // Also support direct touch events
+  k.onTouchStart((pos) => {
+    touchState = { startX: pos.x, startY: pos.y, startTime: Date.now() }
   })
 
   k.onTouchEnd((pos) => {
@@ -52,10 +81,8 @@ export function createInputSystem(k: KAPLAYCtx) {
 
     if (absDx > SWIPE_THRESHOLD || absDy > SWIPE_THRESHOLD) {
       if (absDx > absDy) {
-        // Horizontal swipe
         pendingInput = dx > 0 ? 'right' : 'left'
       } else {
-        // Vertical swipe
         pendingInput = dy < 0 ? 'jump' : 'slide'
       }
     }

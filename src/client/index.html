@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>MineRun</title>
 	<style>
 		* {
@@ -15,13 +15,19 @@
 			width: 100%;
 			height: 100%;
 			overflow: hidden;
-			background: #1a1a2e;
+			background: #121220;
 			touch-action: none;
+			-webkit-touch-callout: none;
+			-webkit-user-select: none;
+			user-select: none;
 		}
 		canvas {
 			display: block;
-			width: 100%;
-			height: 100%;
+			width: 100% !important;
+			height: 100% !important;
+			position: absolute;
+			top: 0;
+			left: 0;
 		}
 	</style>
 </head>

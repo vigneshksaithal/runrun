@@ -33,8 +33,13 @@ export function createLaneSystem() {
     },
 
     update() {
-      // Smooth lerp to target lane
-      currentX += (targetX - currentX) * GAME_CONFIG.LANE_SWITCH_SPEED
+      // Smooth lerp to target lane - snappy!
+      const diff = targetX - currentX
+      currentX += diff * GAME_CONFIG.LANE_SWITCH_SPEED
+      // Snap when very close
+      if (Math.abs(diff) < 0.5) {
+        currentX = targetX
+      }
     },
 
     reset() {
