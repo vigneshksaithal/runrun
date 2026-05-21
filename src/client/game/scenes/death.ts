@@ -13,7 +13,7 @@ export function createDeathScene(k: KAPLAYCtx) {
     k.add([
       k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
       k.pos(0, 0),
-      k.color(10, 8, 6),
+      k.color(12, 20, 18),
       k.opacity(0.9),
       k.z(0),
     ])

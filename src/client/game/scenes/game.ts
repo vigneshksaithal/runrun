@@ -24,18 +24,32 @@ export function createGameScene(k: KAPLAYCtx) {
     const spawner = createSpawnerSystem(k)
 
     // === BACKGROUND ===
-    // Dark warm gradient
+    // Sky/ceiling gradient: dark blue-green → emerald
     k.add([
-      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT / 2),
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT / 3),
       k.pos(0, 0),
       k.color(...C.BG_TOP),
       k.z(0),
     ])
     k.add([
-      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT / 2),
-      k.pos(0, GAME_CONFIG.HEIGHT / 2),
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT / 3),
+      k.pos(0, GAME_CONFIG.HEIGHT / 3),
       k.color(...C.BG_MID),
       k.z(0),
+    ])
+    k.add([
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT / 3),
+      k.pos(0, (GAME_CONFIG.HEIGHT * 2) / 3),
+      k.color(...C.BG_BOTTOM),
+      k.z(0),
+    ])
+
+    // Track/floor area - dark stone with green tint
+    k.add([
+      k.rect(GAME_CONFIG.WIDTH - 160, GAME_CONFIG.HEIGHT),
+      k.pos(80, 0),
+      k.color(...C.TRACK_TOP),
+      k.z(1),
     ])
 
     // Left wall
@@ -52,39 +66,123 @@ export function createGameScene(k: KAPLAYCtx) {
       k.color(...C.WALL_DARK),
       k.z(1),
     ])
-    // Left wall highlight
+    // Left wall mid layer
     k.add([
-      k.rect(8, GAME_CONFIG.HEIGHT),
+      k.rect(20, GAME_CONFIG.HEIGHT),
+      k.pos(60, 0),
+      k.color(...C.WALL_MID),
+      k.z(2),
+    ])
+    // Right wall mid layer
+    k.add([
+      k.rect(20, GAME_CONFIG.HEIGHT),
+      k.pos(GAME_CONFIG.WIDTH - 80, 0),
+      k.color(...C.WALL_MID),
+      k.z(2),
+    ])
+    // Left wall highlight edge
+    k.add([
+      k.rect(6, GAME_CONFIG.HEIGHT),
       k.pos(78, 0),
       k.color(...C.WALL_LIGHT),
       k.z(2),
     ])
-    // Right wall highlight
+    // Right wall highlight edge
     k.add([
-      k.rect(8, GAME_CONFIG.HEIGHT),
-      k.pos(GAME_CONFIG.WIDTH - 86, 0),
+      k.rect(6, GAME_CONFIG.HEIGHT),
+      k.pos(GAME_CONFIG.WIDTH - 84, 0),
       k.color(...C.WALL_LIGHT),
       k.z(2),
     ])
 
-    // Torch lights (2 per side = 4 total)
+    // Bright green moss accent strips on walls
+    k.add([
+      k.rect(4, GAME_CONFIG.HEIGHT),
+      k.pos(76, 0),
+      k.color(...C.WALL_ACCENT),
+      k.opacity(0.7),
+      k.z(3),
+    ])
+    k.add([
+      k.rect(4, GAME_CONFIG.HEIGHT),
+      k.pos(GAME_CONFIG.WIDTH - 80, 0),
+      k.color(...C.WALL_ACCENT),
+      k.opacity(0.7),
+      k.z(3),
+    ])
+
+    // Crystal formations on walls (blue, purple, green)
+    // Left wall crystals
+    k.add([
+      k.rect(10, 22),
+      k.pos(30, 260),
+      k.anchor('center'),
+      k.color(...C.CRYSTAL_BLUE),
+      k.opacity(0.85),
+      k.z(3),
+    ])
+    k.add([
+      k.rect(8, 18),
+      k.pos(50, 480),
+      k.anchor('center'),
+      k.color(...C.CRYSTAL_PURPLE),
+      k.opacity(0.8),
+      k.z(3),
+    ])
+    // Right wall crystals
+    k.add([
+      k.rect(10, 20),
+      k.pos(GAME_CONFIG.WIDTH - 35, 350),
+      k.anchor('center'),
+      k.color(...C.CRYSTAL_GREEN),
+      k.opacity(0.85),
+      k.z(3),
+    ])
+    k.add([
+      k.rect(8, 16),
+      k.pos(GAME_CONFIG.WIDTH - 50, 600),
+      k.anchor('center'),
+      k.color(...C.CRYSTAL_BLUE),
+      k.opacity(0.75),
+      k.z(3),
+    ])
+
+    // Distant sky peek at vanishing point area
+    k.add([
+      k.rect(40, 20),
+      k.pos(GAME_CONFIG.VANISHING_POINT_X, GAME_CONFIG.LANE_Y_TOP - 30),
+      k.anchor('center'),
+      k.color(80, 220, 200),
+      k.opacity(0.3),
+      k.z(2),
+    ])
+
+    // Torch lights (2 per side = 4 total) - bigger flames
     function addTorch(x: number, y: number) {
-      // Flame rect
+      // Torch stick
       k.add([
-        k.rect(8, 12),
+        k.rect(4, 20),
+        k.pos(x, y + 14),
+        k.anchor('center'),
+        k.color(...C.TORCH_STICK),
+        k.z(3),
+      ])
+      // Flame rect (bigger)
+      k.add([
+        k.rect(10, 16),
         k.pos(x, y),
         k.anchor('center'),
         k.color(...C.TORCH_FLAME),
-        k.opacity(0.8),
+        k.opacity(0.9),
         k.z(3),
       ])
-      // Glow rect
+      // Glow rect (bigger)
       k.add([
-        k.rect(20, 20),
+        k.rect(28, 28),
         k.pos(x, y),
         k.anchor('center'),
         k.color(...C.TORCH_GLOW),
-        k.opacity(0.15),
+        k.opacity(0.18),
         k.z(2),
       ])
     }
@@ -92,14 +190,6 @@ export function createGameScene(k: KAPLAYCtx) {
     addTorch(55, 550)
     addTorch(GAME_CONFIG.WIDTH - 55, 300)
     addTorch(GAME_CONFIG.WIDTH - 55, 550)
-
-    // Track/floor area
-    k.add([
-      k.rect(GAME_CONFIG.WIDTH - 160, GAME_CONFIG.HEIGHT),
-      k.pos(80, 0),
-      k.color(...C.TRACK_TOP),
-      k.z(1),
-    ])
 
     // === ROAD LINES ===
     const roadLines: GameObj[] = []
@@ -361,7 +451,7 @@ export function createGameScene(k: KAPLAYCtx) {
         const overlay = k.add([
           k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
           k.pos(0, 0),
-          k.color(10, 8, 6),
+          k.color(12, 20, 18),
           k.opacity(0.8),
           k.z(260),
         ])

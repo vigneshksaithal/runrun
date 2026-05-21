@@ -8,7 +8,7 @@ import { createDeathScene } from './game/scenes/death'
 const k = kaplay({
   width: GAME_CONFIG.WIDTH,
   height: GAME_CONFIG.HEIGHT,
-  background: [26, 21, 16],
+  background: [15, 25, 40],
   stretch: true,
   letterbox: false,
   crisp: true,

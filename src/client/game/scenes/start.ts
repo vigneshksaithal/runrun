@@ -5,7 +5,7 @@ const C = GAME_CONFIG.COLORS
 
 export function createStartScene(k: KAPLAYCtx) {
   k.scene('start', () => {
-    // Dark warm gradient background
+    // Dark blue-green → emerald gradient background (matching game)
     k.add([
       k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT / 3),
       k.pos(0, 0),
@@ -25,6 +25,17 @@ export function createStartScene(k: KAPLAYCtx) {
       k.z(0),
     ])
 
+    // Title glow shadow (green-tinted)
+    k.add([
+      k.text('BLOCKDASH', { size: 48 }),
+      k.pos(GAME_CONFIG.WIDTH / 2 + 2, 182),
+      k.anchor('center'),
+      k.color(...C.CRYSTAL_GREEN),
+      k.opacity(0.4),
+      k.scale(1),
+      k.z(9),
+    ])
+
     // Title
     k.add([
       k.text('BLOCKDASH', { size: 48 }),
@@ -35,12 +46,12 @@ export function createStartScene(k: KAPLAYCtx) {
       k.z(10),
     ])
 
-    // Subtitle
+    // Subtitle - bright teal
     k.add([
       k.text('How far can you dash?', { size: 18 }),
       k.pos(GAME_CONFIG.WIDTH / 2, 230),
       k.anchor('center'),
-      k.color(...C.PARTICLE_DUST),
+      k.color(80, 220, 200),
       k.z(10),
     ])
 
@@ -85,7 +96,7 @@ export function createStartScene(k: KAPLAYCtx) {
       preview.pos.y = 380 + Math.sin(bounceTime) * 8
     })
 
-    // PLAY button
+    // PLAY button - bright green
     const btn = k.add([
       k.rect(160, 54, { radius: 6 }),
       k.pos(GAME_CONFIG.WIDTH / 2, 520),
@@ -136,22 +147,30 @@ export function createStartScene(k: KAPLAYCtx) {
       ])
     }
 
-    // Controls hint
+    // Controls hint - teal tinted
     k.add([
       k.text('Swipe or Arrow Keys', { size: 14 }),
       k.pos(GAME_CONFIG.WIDTH / 2, 700),
       k.anchor('center'),
-      k.color(140, 120, 90),
+      k.color(80, 180, 160),
       k.z(10),
     ])
 
-    // Subtle floating particles (max 6)
+    // Floating particles: mix gold + cyan + green (6 particles)
+    const particleColors: [number, number, number][] = [
+      C.PARTICLE_GOLD,
+      C.PARTICLE_GOLD,
+      [80, 220, 200],
+      [80, 220, 200],
+      C.CRYSTAL_GREEN,
+      C.CRYSTAL_GREEN,
+    ]
     for (let i = 0; i < 6; i++) {
       const p = k.add([
         k.rect(k.rand(3, 5), k.rand(3, 5)),
         k.pos(k.rand(50, 550), k.rand(100, 750)),
         k.anchor('center'),
-        k.color(...C.TORCH_FLAME),
+        k.color(...particleColors[i]),
         k.opacity(k.rand(0.15, 0.35)),
         k.z(5),
       ])

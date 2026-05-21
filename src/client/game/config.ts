@@ -42,64 +42,71 @@ export const GAME_CONFIG = {
   COMBO_THRESHOLD: 5,
   MAX_MULTIPLIER: 5,
 
-  // Colors - Clean Blocky: warm earth/stone tunnel
+  // Colors - Lush Crystal Cavern: vibrant underground world
   COLORS: {
-    // Background - warm dark browns
-    BG_TOP: [20, 16, 12] as [number, number, number],
-    BG_MID: [30, 24, 18] as [number, number, number],
-    BG_BOTTOM: [40, 32, 24] as [number, number, number],
+    // Background - deep teal/emerald cave sky
+    BG_TOP: [15, 25, 40] as [number, number, number],
+    BG_MID: [20, 35, 50] as [number, number, number],
+    BG_BOTTOM: [25, 45, 55] as [number, number, number],
 
-    // Track - dark stone floor
-    TRACK_TOP: [35, 28, 20] as [number, number, number],
-    TRACK_BOTTOM: [50, 40, 30] as [number, number, number],
+    // Track - dark stone with green tint
+    TRACK_TOP: [30, 40, 38] as [number, number, number],
+    TRACK_BOTTOM: [45, 55, 50] as [number, number, number],
 
-    // Walls - dark stone brown
-    WALL_DARK: [25, 20, 15] as [number, number, number],
-    WALL_LIGHT: [55, 44, 33] as [number, number, number],
+    // Walls - emerald stone with depth
+    WALL_DARK: [20, 40, 35] as [number, number, number],
+    WALL_MID: [30, 55, 45] as [number, number, number],
+    WALL_LIGHT: [40, 70, 55] as [number, number, number],
+    WALL_ACCENT: [60, 180, 120] as [number, number, number],
 
-    // Lane/road lines - warm cream/tan
-    LANE_LINE: [180, 160, 120] as [number, number, number],
-    LANE_GLOW: [140, 120, 90] as [number, number, number],
+    // Lane lines - bright cyan (high contrast against dark)
+    LANE_LINE: [80, 220, 200] as [number, number, number],
 
-    // Player - blocky character
-    PLAYER_BODY: [60, 180, 170] as [number, number, number],
-    PLAYER_HEAD: [220, 180, 150] as [number, number, number],
-    PLAYER_HAIR: [100, 70, 40] as [number, number, number],
-    PLAYER_LEGS: [40, 60, 100] as [number, number, number],
+    // Player - vibrant and eye-catching
+    PLAYER_BODY: [50, 200, 220] as [number, number, number],
+    PLAYER_HEAD: [230, 185, 155] as [number, number, number],
+    PLAYER_HAIR: [255, 120, 40] as [number, number, number],
+    PLAYER_LEGS: [40, 100, 180] as [number, number, number],
     PLAYER_EYES: [20, 20, 20] as [number, number, number],
 
-    // Coins - bright gold
-    COIN: [255, 200, 40] as [number, number, number],
-    COIN_DARK: [200, 150, 20] as [number, number, number],
-    COIN_SHINE: [255, 255, 220] as [number, number, number],
+    // Coins - BRIGHT saturated gold (maximum visibility)
+    COIN: [255, 200, 0] as [number, number, number],
+    COIN_DARK: [200, 150, 0] as [number, number, number],
+    COIN_SHINE: [255, 255, 180] as [number, number, number],
 
-    // Obstacles - stone/danger
-    OBSTACLE_STONE: [120, 110, 100] as [number, number, number],
-    OBSTACLE_STONE_DARK: [80, 72, 65] as [number, number, number],
-    OBSTACLE_BEAM: [100, 80, 60] as [number, number, number],
-    OBSTACLE_BEAM_DARK: [70, 55, 40] as [number, number, number],
-    OBSTACLE_PILLAR: [180, 50, 50] as [number, number, number],
-    OBSTACLE_STRIPE: [220, 180, 0] as [number, number, number],
-    OBSTACLE_STRIPE_DARK: [30, 30, 30] as [number, number, number],
+    // Obstacles - vivid red/magenta (unmistakable danger)
+    OBSTACLE_STONE: [220, 50, 60] as [number, number, number],
+    OBSTACLE_STONE_DARK: [160, 30, 40] as [number, number, number],
+    OBSTACLE_BEAM: [220, 50, 60] as [number, number, number],
+    OBSTACLE_BEAM_DARK: [160, 30, 40] as [number, number, number],
+    OBSTACLE_PILLAR: [220, 50, 60] as [number, number, number],
+    OBSTACLE_STRIPE: [255, 200, 50] as [number, number, number],
+    OBSTACLE_STRIPE_DARK: [160, 30, 40] as [number, number, number],
 
-    // Torch/ambient
+    // Torch/lighting
     TORCH_FLAME: [255, 160, 40] as [number, number, number],
-    TORCH_GLOW: [255, 120, 20] as [number, number, number],
+    TORCH_GLOW: [255, 200, 80] as [number, number, number],
+    TORCH_STICK: [120, 80, 40] as [number, number, number],
 
-    // Particles
-    PARTICLE_DUST: [140, 110, 70] as [number, number, number],
-    PARTICLE_GOLD: [255, 200, 60] as [number, number, number],
+    // Crystal accents (scattered in walls)
+    CRYSTAL_BLUE: [100, 180, 255] as [number, number, number],
+    CRYSTAL_PURPLE: [160, 100, 255] as [number, number, number],
+    CRYSTAL_GREEN: [80, 255, 160] as [number, number, number],
+
+    // Particles / Effects
+    PARTICLE_DUST: [80, 200, 160] as [number, number, number],
+    PARTICLE_GOLD: [255, 220, 80] as [number, number, number],
     PARTICLE_STONE: [100, 90, 80] as [number, number, number],
 
     // Speed lines
-    SPEED_LINE: [180, 160, 120] as [number, number, number],
+    SPEED_LINE: [150, 220, 255] as [number, number, number],
 
-    // UI
+    // UI - clean and bold
     TEXT_WHITE: [255, 255, 255] as [number, number, number],
-    TEXT_GOLD: [255, 210, 40] as [number, number, number],
-    COMBO_TEXT: [255, 180, 60] as [number, number, number],
-    BUTTON_GREEN: [60, 180, 80] as [number, number, number],
-    BUTTON_GREEN_DARK: [40, 140, 60] as [number, number, number],
+    TEXT_GOLD: [255, 210, 0] as [number, number, number],
+    COMBO_TEXT: [80, 255, 180] as [number, number, number],
+    BUTTON_GREEN: [50, 200, 100] as [number, number, number],
+    BUTTON_GREEN_DARK: [35, 150, 70] as [number, number, number],
   }
 }
 
