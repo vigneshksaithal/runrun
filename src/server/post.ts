@@ -8,8 +8,7 @@ export const createPost = async () => {
 
   return await reddit.submitCustomPost({
     subredditName,
-    // TODO: Add a title
-    title: 'Post Name',
+    title: 'RunRun - How far can you run? \ud83c\udfc3\ud83d\udca8',
     entry: 'default'
   })
 }

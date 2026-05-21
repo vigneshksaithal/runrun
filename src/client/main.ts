@@ -1,12 +1,24 @@
-import { mount } from 'svelte'
-import './app.css'
-import App from './App.svelte'
+import kaplay from 'kaplay'
+import { GAME_CONFIG } from './game/config'
+import { createStartScene } from './game/scenes/start'
+import { createGameScene } from './game/scenes/game'
+import { createDeathScene } from './game/scenes/death'
 
-const appElement = document.getElementById('app')
-if (!appElement) {
-  throw new Error('App element not found')
-}
-
-export const app = mount(App, {
-  target: appElement
+// Initialize KaplayJS
+const k = kaplay({
+  width: GAME_CONFIG.WIDTH,
+  height: GAME_CONFIG.HEIGHT,
+  background: [15, 25, 40],
+  stretch: true,
+  letterbox: false,
+  crisp: true,
+  touchToMouse: true,
 })
+
+// Register scenes
+createStartScene(k)
+createGameScene(k)
+createDeathScene(k)
+
+// Start with the start screen
+k.go('start')
