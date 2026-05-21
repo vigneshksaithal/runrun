@@ -122,21 +122,23 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
       player.pos.y,
       GAME_CONFIG.PLAYER_Y - 95,
       GAME_CONFIG.JUMP_DURATION * 0.4,
-      (val: number) => { player.pos.y = val },
+      (val: number) => { if (player.exists()) player.pos.y = val },
       k.easings.easeOutQuad
     ).then(() => {
+      if (!player.exists()) return
       return k.tween(
         player.pos.y,
         GAME_CONFIG.PLAYER_Y,
         GAME_CONFIG.JUMP_DURATION * 0.6,
-        (val: number) => { player.pos.y = val },
+        (val: number) => { if (player.exists()) player.pos.y = val },
         k.easings.easeInQuad
       )
     }).then(() => {
+      if (!player.exists()) return
       playerState.current = 'running'
       // Stretch on landing
       player.scaleTo(0.9, 1.1)
-      k.tween(1.1, 1, 0.12, (val: number) => { player.scaleTo(1, val) }, k.easings.easeOutQuad)
+      k.tween(1.1, 1, 0.12, (val: number) => { if (player.exists()) player.scaleTo(1, val) }, k.easings.easeOutQuad)
 
       // Landing sparkle
       for (let i = 0; i < 4; i++) {
@@ -153,7 +155,7 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
       }
     })
 
-    k.tween(0.8, 1, GAME_CONFIG.JUMP_DURATION * 0.3, (val: number) => { player.scaleTo(val, 2 - val) }, k.easings.easeOutQuad)
+    k.tween(0.8, 1, GAME_CONFIG.JUMP_DURATION * 0.3, (val: number) => { if (player.exists()) player.scaleTo(val, 2 - val) }, k.easings.easeOutQuad)
   }
 
   function slide() {

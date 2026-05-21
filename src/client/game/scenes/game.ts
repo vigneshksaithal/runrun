@@ -143,7 +143,7 @@ export function createGameScene(k: KAPLAYCtx) {
       // Score milestone pop
       if (state.score > 0 && Math.floor(state.score) % 100 === 0 && Math.floor(state.score - gameSpeed * dt * GAME_CONFIG.SCORE_PER_SECOND) % 100 !== 0) {
         scoreText.scaleTo(1.5)
-        k.tween(1.5, 1, 0.3, (v: number) => scoreText.scaleTo(v), k.easings.easeOutBack)
+        k.tween(1.5, 1, 0.3, (v: number) => { if (scoreText.exists()) scoreText.scaleTo(v) }, k.easings.easeOutBack)
       }
 
       // Spawn items
@@ -290,7 +290,7 @@ export function createGameScene(k: KAPLAYCtx) {
           k.z(320),
           k.fixed(),
         ])
-        k.tween(0, 1, 0.3, (v: number) => bigScore.scaleTo(v), k.easings.easeOutBack)
+        k.tween(0, 1, 0.3, (v: number) => { if (bigScore.exists()) bigScore.scaleTo(v) }, k.easings.easeOutBack)
 
         // "points" label
         k.add([
