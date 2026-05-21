@@ -7,7 +7,6 @@ export type PlayerState = 'running' | 'jumping' | 'sliding'
 
 export function createPlayer(k: KAPLAYCtx, x: number) {
   const playerState = { current: 'running' as PlayerState }
-  let shieldActive = false
   let trailTimer = 0
 
   const player = k.add([
@@ -18,99 +17,95 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
     'player',
   ])
 
-  // Shield glow (initially hidden)
-  const shieldGlow = player.add([
-    k.rect(GAME_CONFIG.PLAYER_WIDTH + 16, 70),
-    k.pos(-(GAME_CONFIG.PLAYER_WIDTH + 16) / 2, -66),
-    k.color(...COLORS.SHIELD_BLUE),
-    k.opacity(0),
-    k.z(10),
-  ])
-
-  // Body (teal shirt)
+  // Body (teal)
   const body = player.add([
-    k.rect(GAME_CONFIG.PLAYER_WIDTH, 30),
-    k.pos(-GAME_CONFIG.PLAYER_WIDTH / 2, -30),
+    k.rect(GAME_CONFIG.PLAYER_WIDTH, 35),
+    k.pos(-GAME_CONFIG.PLAYER_WIDTH / 2, -35),
     k.color(...COLORS.PLAYER_BODY),
     k.z(1),
   ])
 
   // Head (skin tone)
   const head = player.add([
-    k.rect(GAME_CONFIG.PLAYER_WIDTH - 4, 26),
-    k.pos(-(GAME_CONFIG.PLAYER_WIDTH - 4) / 2, -56),
+    k.rect(GAME_CONFIG.PLAYER_WIDTH - 6, 28),
+    k.pos(-(GAME_CONFIG.PLAYER_WIDTH - 6) / 2, -63),
     k.color(...COLORS.PLAYER_HEAD),
     k.z(2),
   ])
 
-  // Hair (brown top)
+  // Hair (orange top)
   player.add([
-    k.rect(GAME_CONFIG.PLAYER_WIDTH - 4, 7),
-    k.pos(-(GAME_CONFIG.PLAYER_WIDTH - 4) / 2, -56),
+    k.rect(GAME_CONFIG.PLAYER_WIDTH - 6, 10),
+    k.pos(-(GAME_CONFIG.PLAYER_WIDTH - 6) / 2, -63),
     k.color(...COLORS.PLAYER_HAIR),
     k.z(3),
   ])
 
-  // Eyes (simple black squares)
-  player.add([k.rect(5, 5), k.pos(-9, -44), k.color(0, 0, 0), k.z(3)])
-  player.add([k.rect(5, 5), k.pos(4, -44), k.color(0, 0, 0), k.z(3)])
+  // Eyes
+  player.add([k.rect(5, 5), k.pos(-10, -50), k.color(30, 30, 30), k.z(3)])
+  player.add([k.rect(5, 5), k.pos(5, -50), k.color(30, 30, 30), k.z(3)])
 
-  // Legs (dark blue)
-  player.add([
-    k.rect(GAME_CONFIG.PLAYER_WIDTH - 8, 18),
-    k.pos(-(GAME_CONFIG.PLAYER_WIDTH - 8) / 2, -18),
+  // Legs (alternating for run animation)
+  const leftLeg = player.add([
+    k.rect(16, 20),
+    k.pos(-GAME_CONFIG.PLAYER_WIDTH / 2 + 4, -20),
     k.color(...COLORS.PLAYER_LEGS),
     k.z(0),
   ])
 
-  // Swinging arms
+  const rightLeg = player.add([
+    k.rect(16, 20),
+    k.pos(GAME_CONFIG.PLAYER_WIDTH / 2 - 20, -20),
+    k.color(...COLORS.PLAYER_LEGS),
+    k.z(0),
+  ])
+
+  // Arms
   const leftArm = player.add([
-    k.rect(8, 20),
-    k.pos(-GAME_CONFIG.PLAYER_WIDTH / 2 - 8, -28),
+    k.rect(8, 22),
+    k.pos(-GAME_CONFIG.PLAYER_WIDTH / 2 - 8, -33),
     k.color(...COLORS.PLAYER_BODY),
     k.z(1),
   ])
 
   const rightArm = player.add([
-    k.rect(8, 20),
-    k.pos(GAME_CONFIG.PLAYER_WIDTH / 2, -28),
+    k.rect(8, 22),
+    k.pos(GAME_CONFIG.PLAYER_WIDTH / 2, -33),
     k.color(...COLORS.PLAYER_BODY),
     k.z(1),
   ])
 
-  // Running animation (bob head and body + swing arms + trail)
+  // Running animation
   let bobTime = 0
   const bobAction = player.onUpdate(() => {
     if (playerState.current === 'running') {
-      bobTime += k.dt() * 10
+      bobTime += k.dt() * 12
       const bob = Math.sin(bobTime) * 2.5
-      head.pos.y = -56 + bob
-      body.pos.y = -30 + bob * 0.5
+      head.pos.y = -63 + bob
+      body.pos.y = -35 + bob * 0.4
+
+      // Leg alternation (running feel)
+      const legSwing = Math.sin(bobTime) * 5
+      leftLeg.pos.y = -20 + legSwing
+      rightLeg.pos.y = -20 - legSwing
 
       // Arm swing
       const armSwing = Math.sin(bobTime) * 6
-      leftArm.pos.y = -28 + armSwing
-      rightArm.pos.y = -28 - armSwing
+      leftArm.pos.y = -33 + armSwing
+      rightArm.pos.y = -33 - armSwing
     }
 
-    // Shield glow animation
-    if (shieldActive) {
-      shieldGlow.opacity = 0.2 + Math.sin(k.time() * 4) * 0.1
-    } else {
-      shieldGlow.opacity = 0
-    }
-
-    // Particle trail while running
+    // Bright trail while running
     trailTimer += k.dt()
-    if (playerState.current === 'running' && trailTimer > 0.08) {
+    if (playerState.current === 'running' && trailTimer > 0.1) {
       trailTimer = 0
       k.add([
         k.rect(k.rand(3, 6), k.rand(3, 6)),
-        k.pos(player.pos.x + k.rand(-12, 12), player.pos.y - k.rand(2, 10)),
-        k.color(130, 110, 90),
-        k.opacity(0.5),
+        k.pos(player.pos.x + k.rand(-10, 10), player.pos.y - k.rand(2, 8)),
+        k.color(200, 240, 255),
+        k.opacity(0.4),
         k.anchor('center'),
-        k.lifespan(0.3, { fade: 0.2 }),
+        k.lifespan(0.25, { fade: 0.15 }),
         k.z(90),
       ])
     }
@@ -120,11 +115,12 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
     if (playerState.current !== 'running') return
     playerState.current = 'jumping'
 
+    // Squash before jump
     player.scaleTo(1.1, 0.8)
 
     k.tween(
       player.pos.y,
-      GAME_CONFIG.PLAYER_Y - 90,
+      GAME_CONFIG.PLAYER_Y - 95,
       GAME_CONFIG.JUMP_DURATION * 0.4,
       (val: number) => { player.pos.y = val },
       k.easings.easeOutQuad
@@ -138,19 +134,20 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
       )
     }).then(() => {
       playerState.current = 'running'
+      // Stretch on landing
       player.scaleTo(0.9, 1.1)
       k.tween(1.1, 1, 0.12, (val: number) => { player.scaleTo(1, val) }, k.easings.easeOutQuad)
 
-      // Landing dust
-      for (let i = 0; i < 5; i++) {
+      // Landing sparkle
+      for (let i = 0; i < 4; i++) {
         k.add([
           k.rect(4, 4),
-          k.pos(player.pos.x + k.rand(-25, 25), GAME_CONFIG.PLAYER_Y),
-          k.color(130, 110, 90),
-          k.opacity(0.7),
+          k.pos(player.pos.x + k.rand(-20, 20), GAME_CONFIG.PLAYER_Y),
+          k.color(200, 230, 255),
+          k.opacity(0.8),
           k.anchor('center'),
-          k.move(k.Vec2.fromAngle(k.rand(-180, 0)), k.rand(40, 100)),
-          k.lifespan(0.3, { fade: 0.2 }),
+          k.move(k.Vec2.fromAngle(k.rand(-180, 0)), k.rand(40, 80)),
+          k.lifespan(0.25, { fade: 0.15 }),
           k.z(90),
         ])
       }
@@ -177,24 +174,26 @@ export function createPlayer(k: KAPLAYCtx, x: number) {
     player.pos.x = newX
   }
 
-  function setShield(active: boolean) {
-    shieldActive = active
-  }
-
   function destroy() {
     bobAction.cancel()
     player.destroy()
   }
 
-  return { obj: player, state: playerState, jump, slide, setX, setShield, destroy }
+  return { obj: player, state: playerState, jump, slide, setX, destroy }
 }
 
 export function createDeathParticles(k: KAPLAYCtx, x: number, y: number) {
-  const colors: Array<[number, number, number]> = [COLORS.PLAYER_BODY, COLORS.PLAYER_HEAD, COLORS.PLAYER_LEGS, COLORS.PLAYER_HAIR]
+  const colors: Array<[number, number, number]> = [
+    COLORS.PLAYER_BODY,
+    COLORS.PLAYER_HEAD,
+    COLORS.PLAYER_LEGS,
+    COLORS.PLAYER_HAIR,
+    [255, 100, 100],
+  ]
 
-  for (let i = 0; i < 24; i++) {
+  for (let i = 0; i < 20; i++) {
     const color = colors[Math.floor(Math.random() * colors.length)]!
-    const size = k.rand(4, 14)
+    const size = k.rand(5, 14)
     k.add([
       k.rect(size, size),
       k.pos(x, y - 30),
@@ -202,7 +201,7 @@ export function createDeathParticles(k: KAPLAYCtx, x: number, y: number) {
       k.opacity(1),
       k.anchor('center'),
       k.move(k.Vec2.fromAngle(k.rand(0, 360)), k.rand(100, 300)),
-      k.lifespan(0.9, { fade: 0.4 }),
+      k.lifespan(0.8, { fade: 0.4 }),
       k.rotate(k.rand(0, 360)),
       k.z(200),
     ])

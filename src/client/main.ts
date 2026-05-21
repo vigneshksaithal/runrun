@@ -4,11 +4,11 @@ import { createStartScene } from './game/scenes/start'
 import { createGameScene } from './game/scenes/game'
 import { createDeathScene } from './game/scenes/death'
 
-// Initialize KaplayJS - let it create canvas on body naturally
+// Initialize KaplayJS
 const k = kaplay({
   width: GAME_CONFIG.WIDTH,
   height: GAME_CONFIG.HEIGHT,
-  background: [18, 18, 32],
+  background: [100, 180, 255],
   stretch: true,
   letterbox: false,
   crisp: true,

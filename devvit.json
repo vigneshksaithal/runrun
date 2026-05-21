@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "minerun",
+  "name": "blockdash",
   "post": {
     "dir": "dist/client",
     "entrypoints": {
@@ -18,8 +18,8 @@
   "menu": {
     "items": [
       {
-        "label": "Create MineRun Post",
-        "description": "Create a MineRun endless runner game post",
+        "label": "Create BlockDash Post",
+        "description": "Create a BlockDash endless runner game post",
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/post-create"
