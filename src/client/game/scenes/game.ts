@@ -788,6 +788,7 @@ function showNearMiss(k: KAPLAYCtx, x: number, y: number) {
     k.pos(x, y),
     k.anchor('center'),
     k.color(...COLORS.NEAR_MISS),
+    k.opacity(1),
     k.move(k.UP, 50),
     k.lifespan(0.5, { fade: 0.3 }),
     k.z(180),

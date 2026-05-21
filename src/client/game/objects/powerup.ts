@@ -75,6 +75,7 @@ export function createPowerUpCollectParticles(k: KAPLAYCtx, x: number, y: number
       k.rect(6, 6),
       k.pos(x, y),
       k.color(...color),
+      k.opacity(1),
       k.anchor('center'),
       k.move(k.Vec2.fromAngle(angle), k.rand(80, 160)),
       k.lifespan(0.5, { fade: 0.3 }),

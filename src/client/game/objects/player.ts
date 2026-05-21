@@ -199,6 +199,7 @@ export function createDeathParticles(k: KAPLAYCtx, x: number, y: number) {
       k.rect(size, size),
       k.pos(x, y - 30),
       k.color(...color),
+      k.opacity(1),
       k.anchor('center'),
       k.move(k.Vec2.fromAngle(k.rand(0, 360)), k.rand(100, 300)),
       k.lifespan(0.9, { fade: 0.4 }),

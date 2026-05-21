@@ -116,6 +116,7 @@ export function createObstacleDestroyParticles(k: KAPLAYCtx, x: number, y: numbe
       k.rect(k.rand(4, 10), k.rand(4, 10)),
       k.pos(x, y),
       k.color(...color),
+      k.opacity(1),
       k.anchor('center'),
       k.move(k.Vec2.fromAngle(k.rand(0, 360)), k.rand(60, 200)),
       k.lifespan(0.5, { fade: 0.25 }),
