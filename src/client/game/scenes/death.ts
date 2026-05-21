@@ -9,6 +9,8 @@ interface DeathData {
   isNewHighScore: boolean
   goldsCollected: number
   nearMisses: number
+  maxCombo: number
+  biomeReached: string
 }
 
 export function createDeathScene(k: KAPLAYCtx) {
@@ -23,9 +25,11 @@ export function createDeathScene(k: KAPLAYCtx) {
       isNewHighScore: rawData?.isNewHighScore ?? false,
       goldsCollected: rawData?.goldsCollected ?? 0,
       nearMisses: rawData?.nearMisses ?? 0,
+      maxCombo: rawData?.maxCombo ?? 0,
+      biomeReached: rawData?.biomeReached ?? 'Overworld Mine',
     }
 
-    const { score, highScore, isNewHighScore, goldsCollected, nearMisses } = data
+    const { score, highScore, isNewHighScore, goldsCollected, nearMisses, maxCombo, biomeReached } = data
 
     // Dark overlay background
     k.add([k.rect(W, H), k.pos(0, 0), k.color(18, 14, 28), k.z(0)])
@@ -47,6 +51,19 @@ export function createDeathScene(k: KAPLAYCtx) {
         particle.opacity = 0.1 + Math.sin(k.time() * 2 + i) * 0.12
       })
     }
+
+    // Animated spinning pickaxe near title
+    const pickaxeGroup = k.add([
+      k.pos(W / 2 - 160, 100),
+      k.anchor('center'),
+      k.rotate(0),
+      k.z(12),
+    ])
+    pickaxeGroup.add([k.rect(4, 28), k.pos(-2, -14), k.color(139, 90, 43)])
+    pickaxeGroup.add([k.rect(18, 7), k.pos(-12, -14), k.color(160, 160, 170)])
+    pickaxeGroup.onUpdate(() => {
+      pickaxeGroup.angle = Math.sin(k.time() * 2) * 25
+    })
 
     // "Game Over" title - Minecraft achievement style
     k.add([
@@ -75,7 +92,7 @@ export function createDeathScene(k: KAPLAYCtx) {
     // Score display (large, animated pop-in)
     const scoreDisplay = k.add([
       k.text(score.toString(), { size: 64 }),
-      k.pos(W / 2, 200),
+      k.pos(W / 2, 190),
       k.anchor('center'),
       k.color(...COLORS.TEXT_WHITE),
       k.scale(0),
@@ -85,7 +102,7 @@ export function createDeathScene(k: KAPLAYCtx) {
 
     k.add([
       k.text('blocks', { size: 18 }),
-      k.pos(W / 2, 240),
+      k.pos(W / 2, 230),
       k.anchor('center'),
       k.color(...COLORS.LANE_LINE),
       k.z(12),
@@ -95,7 +112,7 @@ export function createDeathScene(k: KAPLAYCtx) {
     if (isNewHighScore) {
       const badge = k.add([
         k.rect(180, 32, { radius: 16 }),
-        k.pos(W / 2, 280),
+        k.pos(W / 2, 265),
         k.anchor('center'),
         k.color(...COLORS.TEXT_GOLD),
         k.scale(1),
@@ -103,7 +120,7 @@ export function createDeathScene(k: KAPLAYCtx) {
       ])
       k.add([
         k.text('NEW BEST!', { size: 16 }),
-        k.pos(W / 2, 280),
+        k.pos(W / 2, 265),
         k.anchor('center'),
         k.color(30, 20, 0),
         k.z(12),
@@ -114,7 +131,7 @@ export function createDeathScene(k: KAPLAYCtx) {
     } else {
       k.add([
         k.text(`Best: ${highScore}`, { size: 18 }),
-        k.pos(W / 2, 280),
+        k.pos(W / 2, 265),
         k.anchor('center'),
         k.color(...COLORS.LANE_LINE),
         k.z(12),
@@ -122,8 +139,8 @@ export function createDeathScene(k: KAPLAYCtx) {
     }
 
 
-    // Stats section
-    const statsY = 340
+    // Stats section with more breathing room
+    const statsY = 310
 
     // Gold collected
     k.add([
@@ -144,37 +161,59 @@ export function createDeathScene(k: KAPLAYCtx) {
     // Near misses
     k.add([
       k.text(`Near misses: ${nearMisses}`, { size: 15 }),
-      k.pos(W / 2, statsY + 40),
+      k.pos(W / 2, statsY + 35),
       k.anchor('center'),
       k.color(...COLORS.NEAR_MISS),
       k.opacity(0.8),
       k.z(12),
     ])
 
+    // Max combo
+    if (maxCombo > 0) {
+      k.add([
+        k.text(`Max Combo: ${maxCombo}`, { size: 15 }),
+        k.pos(W / 2, statsY + 65),
+        k.anchor('center'),
+        k.color(...COLORS.COMBO_TEXT),
+        k.opacity(0.9),
+        k.z(12),
+      ])
+    }
+
+    // Biome reached
+    k.add([
+      k.text(`Reached: ${biomeReached}`, { size: 14 }),
+      k.pos(W / 2, statsY + 95),
+      k.anchor('center'),
+      k.color(180, 150, 220),
+      k.opacity(0.8),
+      k.z(12),
+    ])
+
+
     // Achievement-style message
     const achievement = getAchievement(score, goldsCollected, nearMisses)
     k.add([
       k.rect(300, 56, { radius: 6 }),
-      k.pos(W / 2, 440),
+      k.pos(W / 2, 470),
       k.anchor('center'),
       k.color(45, 35, 65),
       k.z(10),
     ])
     k.add([
       k.text(achievement.title, { size: 13 }),
-      k.pos(W / 2, 428),
+      k.pos(W / 2, 458),
       k.anchor('center'),
       k.color(...COLORS.TEXT_GOLD),
       k.z(12),
     ])
     k.add([
       k.text(achievement.desc, { size: 12 }),
-      k.pos(W / 2, 450),
+      k.pos(W / 2, 480),
       k.anchor('center'),
       k.color(...COLORS.LANE_LINE),
       k.z(12),
     ])
-
 
     // Play Again button
     const playBtn = k.add([
@@ -202,18 +241,19 @@ export function createDeathScene(k: KAPLAYCtx) {
     // Share button (smaller)
     k.add([
       k.rect(160, 40, { radius: 4 }),
-      k.pos(W / 2, 630),
+      k.pos(W / 2, 640),
       k.anchor('center'),
       k.color(70, 70, 160),
       k.z(10),
     ])
     k.add([
       k.text('Copy Score', { size: 15 }),
-      k.pos(W / 2, 630),
+      k.pos(W / 2, 640),
       k.anchor('center'),
       k.color(...COLORS.TEXT_WHITE),
       k.z(12),
     ])
+
 
     // Delay before accepting input
     let canRestart = false
@@ -227,7 +267,7 @@ export function createDeathScene(k: KAPLAYCtx) {
       const mousePos = k.mousePos()
       // Share button area
       if (mousePos.x > W / 2 - 80 && mousePos.x < W / 2 + 80 &&
-          mousePos.y > 610 && mousePos.y < 650) {
+          mousePos.y > 620 && mousePos.y < 660) {
         copyToClipboard(shareText)
         return
       }

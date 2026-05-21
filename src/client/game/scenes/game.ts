@@ -4,11 +4,18 @@ import { createInputSystem } from '../systems/input'
 import { createLaneSystem } from '../systems/lanes'
 import { createScoringSystem } from '../systems/scoring'
 import { createSpawnerSystem } from '../systems/spawner'
+import { getBiome, getBiomeIndex, getBiomeName } from '../systems/biome'
 import { createPlayer, createDeathParticles } from '../objects/player'
 import { createObstacle, updateObstacle, createObstacleDestroyParticles, type Obstacle } from '../objects/obstacle'
 import { createCollectible, updateCollectible, createCollectParticles, type Collectible } from '../objects/collectible'
+import { createPowerUp, updatePowerUp, createPowerUpCollectParticles, type PowerUp, type PowerUpType } from '../objects/powerup'
 
 const { COLORS } = GAME_CONFIG
+
+interface ActivePowerUp {
+  type: PowerUpType
+  timeLeft: number
+}
 
 export function createGameScene(k: KAPLAYCtx) {
   k.scene('game', () => {
@@ -27,15 +34,44 @@ export function createGameScene(k: KAPLAYCtx) {
     let alive = true
     const obstacles: Obstacle[] = []
     const collectibles: Collectible[] = []
+    const powerUps: PowerUp[] = []
+    const activePowerUps: ActivePowerUp[] = []
+    let lastBiomeIndex = 0
 
     // Draw the persistent background/track
     drawTrackBackground(k)
 
+
+    // Biome overlay tint (used to color-shift the scene)
+    const biomeOverlay = k.add([
+      k.rect(W, H),
+      k.pos(0, 0),
+      k.color(0, 0, 0),
+      k.opacity(0),
+      k.z(1),
+    ])
+
     // Create animated road markings (the key to "running" feel!)
     const roadLines = createAnimatedRoadLines(k)
 
+    // Ambient dust particles (always present ~15)
+    interface DustObj { pos: { x: number; y: number }; opacity: number; destroy(): void }
+    const dustParticles: Array<{ obj: DustObj; vx: number; vy: number }> = []
+    for (let i = 0; i < 15; i++) {
+      const obj = k.add([
+        k.rect(k.rand(2, 4), k.rand(2, 4)),
+        k.pos(k.rand(40, W - 40), k.rand(220, H - 100)),
+        k.color(160, 150, 140),
+        k.opacity(k.rand(0.1, 0.3)),
+        k.anchor('center'),
+        k.z(95),
+      ]) as unknown as DustObj
+      dustParticles.push({ obj, vx: k.rand(-8, 8), vy: k.rand(-12, -3) })
+    }
+
     // Create player
     const player = createPlayer(k, lanes.getCurrentX())
+
 
     // HUD - Score
     const scoreText = k.add([
@@ -59,8 +95,23 @@ export function createGameScene(k: KAPLAYCtx) {
       k.fixed(),
     ])
 
+    // Multiplier text (only visible when > 1x)
+    const multiplierText = k.add([
+      k.text('', { size: 20 }),
+      k.pos(W / 2, 82),
+      k.anchor('center'),
+      k.color(...COLORS.COMBO_TEXT),
+      k.opacity(0),
+      k.z(200),
+      k.fixed(),
+    ])
+
+    // Power-up indicator area (top right)
+    const powerUpIndicators: Array<ReturnType<KAPLAYCtx['add']>> = []
+
     // Speed lines container (spawned at high speed)
     let speedLineTimer = 0
+
 
     // Main game loop
     k.onUpdate(() => {
@@ -96,20 +147,73 @@ export function createGameScene(k: KAPLAYCtx) {
 
       // Update scoring
       scoring.update(dt, gameSpeed)
-      scoreText.text = Math.floor(scoring.getState().score).toString()
+      const currentScore = scoring.getState().score
+      scoreText.text = Math.floor(currentScore).toString()
+
+      // Multiplier HUD
+      const state = scoring.getState()
+      if (state.multiplier > 1) {
+        multiplierText.text = `${state.multiplier}x COMBO`
+        multiplierText.opacity = 0.9
+      } else {
+        multiplierText.opacity = 0
+      }
+
+
+      // Biome system - update overlay tint
+      const biomeIdx = getBiomeIndex(currentScore)
+      if (biomeIdx !== lastBiomeIndex) {
+        // Biome transition flash
+        const flash = k.add([
+          k.rect(W, H),
+          k.pos(0, 0),
+          k.color(255, 255, 255),
+          k.opacity(0.4),
+          k.z(250),
+        ])
+        k.tween(0.4, 0, 0.6, (v: number) => { flash.opacity = v })
+        k.wait(0.7, () => { flash.destroy() })
+        lastBiomeIndex = biomeIdx
+      }
+
+      // Apply biome tint
+      const biome = getBiome(currentScore)
+      biomeOverlay.color.r = biome.wallColor[0]
+      biomeOverlay.color.g = biome.wallColor[1]
+      biomeOverlay.color.b = biome.wallColor[2]
+      biomeOverlay.opacity = biomeIdx === 0 ? 0 : 0.12
+
+      // Update active power-ups
+      for (let i = activePowerUps.length - 1; i >= 0; i--) {
+        const ap = activePowerUps[i]!
+        if (ap.timeLeft > 0) {
+          ap.timeLeft -= dt
+          if (ap.timeLeft <= 0) {
+            activePowerUps.splice(i, 1)
+            updatePowerUpHUD()
+            if (ap.type === 'shield') {
+              player.setShield(false)
+            }
+          }
+        }
+      }
 
       // Score milestone effects
-      const score = scoring.getState().score
-      if (score > 0 && Math.floor(score) % 100 === 0 && Math.floor(score - gameSpeed * dt * GAME_CONFIG.SCORE_PER_SECOND) % 100 !== 0) {
+      if (currentScore > 0 && Math.floor(currentScore) % 100 === 0 && Math.floor(currentScore - gameSpeed * dt * GAME_CONFIG.SCORE_PER_SECOND) % 100 !== 0) {
         scoreText.scaleTo(1.6)
         k.tween(1.6, 1, 0.3, (v: number) => scoreText.scaleTo(v), k.easings.easeOutBack)
       }
 
-      // Spawn obstacles/collectibles
-      const spawnEvents = spawner.update(dt, gameSpeed)
+
+      // Spawn obstacles/collectibles/powerups
+      const spawnEvents = spawner.update(dt, gameSpeed, currentScore)
       for (const event of spawnEvents) {
         if (event.type === 'gold') {
           collectibles.push(createCollectible(k, event.lane))
+        } else if (event.type === 'power_up') {
+          const types: PowerUpType[] = ['shield', 'magnet', 'double_score']
+          const pType = types[Math.floor(Math.random() * types.length)]!
+          powerUps.push(createPowerUp(k, event.lane, pType))
         } else {
           obstacles.push(createObstacle(k, event.type, event.lane))
         }
@@ -134,6 +238,17 @@ export function createGameScene(k: KAPLAYCtx) {
             const canDodge = checkDodge(obs.type, player.state.current)
 
             if (!canDodge) {
+              // Check shield
+              if (hasPowerUp('shield')) {
+                removePowerUp('shield')
+                player.setShield(false)
+                createObstacleDestroyParticles(k, obs.obj.pos.x, obs.obj.pos.y, obs.type)
+                obs.obj.destroy()
+                obstacles.splice(i, 1)
+                k.shake(5)
+                scoring.resetCombo()
+                continue
+              }
               die(obs)
               return
             }
@@ -152,7 +267,9 @@ export function createGameScene(k: KAPLAYCtx) {
         }
       }
 
+
       // Update collectibles
+      const magnetActive = hasPowerUp('magnet')
       for (let i = collectibles.length - 1; i >= 0; i--) {
         const col = collectibles[i]
         if (!col) continue
@@ -165,11 +282,15 @@ export function createGameScene(k: KAPLAYCtx) {
           continue
         }
 
-        // Collection detection
+        // Collection detection (normal or magnet)
         if (!col.collected && col.y > GAME_CONFIG.PLAYER_Y - 40 && col.y < GAME_CONFIG.PLAYER_Y + 15) {
-          if (col.lane === lanes.getCurrentLane()) {
+          const inLane = col.lane === lanes.getCurrentLane()
+          const adjacentLane = magnetActive && Math.abs(col.lane - lanes.getCurrentLane()) === 1
+
+          if (inLane || adjacentLane) {
             col.collected = true
-            scoring.addGold()
+            const doubleActive = hasPowerUp('double_score')
+            scoring.addGold(doubleActive)
             createCollectParticles(k, col.obj.pos.x, col.obj.pos.y)
             col.obj.destroy()
             collectibles.splice(i, 1)
@@ -177,15 +298,166 @@ export function createGameScene(k: KAPLAYCtx) {
         }
       }
 
-      // Speed lines at high speed
-      if (gameSpeed > 5.5) {
+      // Update power-ups
+      for (let i = powerUps.length - 1; i >= 0; i--) {
+        const pu = powerUps[i]
+        if (!pu) continue
+
+        const pastScreen = updatePowerUp(k, pu, gameSpeed, dt)
+
+        if (pastScreen) {
+          pu.obj.destroy()
+          powerUps.splice(i, 1)
+          continue
+        }
+
+        // Collection detection
+        if (!pu.collected && pu.y > GAME_CONFIG.PLAYER_Y - 40 && pu.y < GAME_CONFIG.PLAYER_Y + 15) {
+          if (pu.lane === lanes.getCurrentLane()) {
+            pu.collected = true
+            collectPowerUp(pu.type)
+            createPowerUpCollectParticles(k, pu.obj.pos.x, pu.obj.pos.y, pu.type)
+            pu.obj.destroy()
+            powerUps.splice(i, 1)
+          }
+        }
+      }
+
+
+      // Update ambient dust particles
+      for (const dust of dustParticles) {
+        dust.obj.pos.x += dust.vx * dt
+        dust.obj.pos.y += dust.vy * dt
+        if (dust.obj.pos.y < 200) {
+          dust.obj.pos.y = H - 100
+          dust.obj.pos.x = k.rand(40, W - 40)
+        }
+        if (dust.obj.pos.x < 20 || dust.obj.pos.x > W - 20) {
+          dust.vx = -dust.vx
+        }
+        dust.obj.opacity = 0.1 + Math.sin(k.time() * 2 + dust.obj.pos.x * 0.01) * 0.1
+      }
+
+      // Speed sparks at high speed
+      if (gameSpeed > 7) {
+        speedLineTimer += dt
+        if (speedLineTimer > 0.03) {
+          speedLineTimer = 0
+          spawnSpeedLine(k, W, H)
+          // Track edge sparks
+          const side = Math.random() > 0.5
+          const sparkX = side ? k.rand(W - 90, W - 50) : k.rand(50, 90)
+          k.add([
+            k.rect(3, 3),
+            k.pos(sparkX, k.rand(500, 680)),
+            k.color(255, 220, 100),
+            k.opacity(0.8),
+            k.anchor('center'),
+            k.move(k.DOWN, k.rand(200, 400)),
+            k.lifespan(0.2, { fade: 0.1 }),
+            k.z(92),
+          ])
+        }
+      } else if (gameSpeed > 5.5) {
         speedLineTimer += dt
         if (speedLineTimer > 0.04) {
           speedLineTimer = 0
           spawnSpeedLine(k, W, H)
         }
       }
+
+      // Nether ember particles
+      if (biomeIdx === 2) {
+        if (Math.random() < 0.15) {
+          k.add([
+            k.rect(k.rand(2, 5), k.rand(2, 5)),
+            k.pos(k.rand(50, W - 50), k.rand(250, H - 100)),
+            k.color(255, k.rand(60, 140), 20),
+            k.opacity(0.7),
+            k.anchor('center'),
+            k.move(k.Vec2.fromAngle(k.rand(-100, -80)), k.rand(30, 70)),
+            k.lifespan(0.8, { fade: 0.4 }),
+            k.z(93),
+          ])
+        }
+      }
     })
+
+
+    function hasPowerUp(type: PowerUpType): boolean {
+      return activePowerUps.some(p => p.type === type)
+    }
+
+    function removePowerUp(type: PowerUpType) {
+      const idx = activePowerUps.findIndex(p => p.type === type)
+      if (idx >= 0) {
+        activePowerUps.splice(idx, 1)
+        updatePowerUpHUD()
+      }
+    }
+
+    function collectPowerUp(type: PowerUpType) {
+      // Remove existing of same type
+      const existingIdx = activePowerUps.findIndex(p => p.type === type)
+      if (existingIdx >= 0) {
+        activePowerUps.splice(existingIdx, 1)
+      }
+
+      let duration: number
+      switch (type) {
+        case 'shield':
+          duration = 9999 // Until hit
+          player.setShield(true)
+          break
+        case 'magnet':
+          duration = GAME_CONFIG.MAGNET_DURATION
+          break
+        case 'double_score':
+          duration = GAME_CONFIG.DOUBLE_SCORE_DURATION
+          break
+      }
+      activePowerUps.push({ type, timeLeft: duration })
+      updatePowerUpHUD()
+    }
+
+    function updatePowerUpHUD() {
+      // Remove old indicators
+      for (const ind of powerUpIndicators) {
+        ind.destroy()
+      }
+      powerUpIndicators.length = 0
+
+      // Create new indicators
+      for (let i = 0; i < activePowerUps.length; i++) {
+        const ap = activePowerUps[i]!
+        let color: [number, number, number]
+        let label: string
+        switch (ap.type) {
+          case 'shield': color = COLORS.SHIELD_BLUE; label = 'S'; break
+          case 'magnet': color = COLORS.MAGNET_PURPLE; label = 'M'; break
+          case 'double_score': color = COLORS.DOUBLE_ORANGE; label = '2x'; break
+        }
+        const indicator = k.add([
+          k.rect(28, 28, { radius: 4 }),
+          k.pos(W - 40 - i * 34, 30),
+          k.anchor('center'),
+          k.color(...color),
+          k.opacity(0.85),
+          k.z(200),
+          k.fixed(),
+        ])
+        k.add([
+          k.text(label, { size: 12 }),
+          k.pos(W - 40 - i * 34, 30),
+          k.anchor('center'),
+          k.color(...COLORS.TEXT_WHITE),
+          k.z(201),
+          k.fixed(),
+        ])
+        powerUpIndicators.push(indicator)
+      }
+    }
+
 
     function checkDodge(obstacleType: string, playerState: string): boolean {
       if (obstacleType === 'stone_wall' && playerState === 'jumping') return true
@@ -220,20 +492,23 @@ export function createGameScene(k: KAPLAYCtx) {
       // Transition to death screen with safe data
       const finalScore = scoring.getFinalScore()
       const isHighScore = scoring.checkHighScore()
-      const state = scoring.getState()
+      const finalState = scoring.getState()
 
       k.wait(0.9, () => {
         k.go('death', {
           score: finalScore,
-          highScore: state.highScore,
+          highScore: finalState.highScore,
           isNewHighScore: isHighScore,
-          goldsCollected: state.goldsCollected,
-          nearMisses: state.nearMisses,
+          goldsCollected: finalState.goldsCollected,
+          nearMisses: finalState.nearMisses,
+          maxCombo: finalState.maxCombo,
+          biomeReached: getBiomeName(finalScore),
         })
       })
     }
   })
 }
+
 
 // Road line objects for animation
 interface RoadLine {
@@ -277,6 +552,7 @@ function createAnimatedRoadLines(k: KAPLAYCtx): RoadLine[] {
   return lines
 }
 
+
 function updateRoadLines(lines: RoadLine[], speed: number, dt: number) {
   const VP_Y = GAME_CONFIG.LANE_Y_TOP
   const BOTTOM = GAME_CONFIG.LANE_Y_BOTTOM
@@ -306,6 +582,7 @@ function updateRoadLines(lines: RoadLine[], speed: number, dt: number) {
     line.obj.opacity = 0.15 + t * 0.4
   }
 }
+
 
 function drawTrackBackground(k: KAPLAYCtx) {
   const W = GAME_CONFIG.WIDTH
@@ -372,6 +649,7 @@ function drawTrackBackground(k: KAPLAYCtx) {
     }
   }
 
+
   // Tunnel walls (right) - mirror
   for (let i = 0; i < wallSegments; i++) {
     const t = i / wallSegments
@@ -425,6 +703,7 @@ function drawTrackBackground(k: KAPLAYCtx) {
   drawOreDeposit(k, 40, 580, [80, 200, 80], 2) // Emerald
   drawOreDeposit(k, W - 50, 620, [100, 180, 255], 2) // Diamond
 }
+
 
 function drawTorch(k: KAPLAYCtx, x: number, y: number) {
   // Larger glow (background)

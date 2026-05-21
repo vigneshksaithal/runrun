@@ -19,6 +19,28 @@ export function createStartScene(k: KAPLAYCtx) {
       ])
     }
 
+    // Floating dust motes in background
+    for (let i = 0; i < 12; i++) {
+      const dust = k.add([
+        k.rect(k.rand(2, 4), k.rand(2, 4)),
+        k.pos(k.rand(30, W - 30), k.rand(80, H - 80)),
+        k.color(160, 150, 140),
+        k.opacity(k.rand(0.1, 0.25)),
+        k.anchor('center'),
+        k.z(2),
+      ])
+      const vx = k.rand(-6, 6)
+      const vy = k.rand(-10, -3)
+      dust.onUpdate(() => {
+        dust.pos.x += vx * k.dt()
+        dust.pos.y += vy * k.dt()
+        if (dust.pos.y < 60) dust.pos.y = H - 80
+        if (dust.pos.x < 20) dust.pos.x = W - 30
+        if (dust.pos.x > W - 20) dust.pos.x = 30
+        dust.opacity = 0.08 + Math.sin(k.time() * 1.5 + i * 0.7) * 0.1
+      })
+    }
+
 
     // Animated background track lines (moving slowly - gives "alive" feel)
     for (let i = 0; i < 12; i++) {
@@ -62,7 +84,6 @@ export function createStartScene(k: KAPLAYCtx) {
       title.color.b = 120 + Math.sin(t * 0.8 + 4) * 40
     })
 
-
     // Subtitle
     k.add([
       k.text('Minecraft x Subway Surfers', { size: 15 }),
@@ -72,6 +93,19 @@ export function createStartScene(k: KAPLAYCtx) {
       k.opacity(0.7),
       k.z(10),
     ])
+
+
+    // Subtle pulsing glow behind player character
+    const playerGlow = k.add([
+      k.rect(80, 100, { radius: 40 }),
+      k.pos(W / 2 - 40, 285),
+      k.color(0, 180, 180),
+      k.opacity(0.08),
+      k.z(15),
+    ])
+    playerGlow.onUpdate(() => {
+      playerGlow.opacity = 0.05 + Math.sin(k.time() * 2) * 0.04
+    })
 
     // Idle player character (bobbing) - larger for start screen
     const playerGroup = k.add([
@@ -113,6 +147,16 @@ export function createStartScene(k: KAPLAYCtx) {
         k.z(10),
       ])
     }
+
+    // Biome hint text
+    k.add([
+      k.text('Mine \u2192 Cave \u2192 Nether \u2192 End', { size: 12 }),
+      k.pos(W / 2, 490),
+      k.anchor('center'),
+      k.color(150, 130, 180),
+      k.opacity(0.6),
+      k.z(10),
+    ])
 
     // "TAP TO PLAY" button
     const btnY = 540

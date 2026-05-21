@@ -40,6 +40,19 @@ export const GAME_CONFIG = {
   ROAD_LINE_COUNT: 12,
   ROAD_LINE_SPEED_MULT: 150,
 
+  // Combo system
+  COMBO_THRESHOLD: 3,  // golds per multiplier level
+  MAX_MULTIPLIER: 4,
+
+  // Power-ups
+  POWER_UP_CHANCE: 0.10,
+  SHIELD_DURATION: -1,  // until hit
+  MAGNET_DURATION: 5,
+  DOUBLE_SCORE_DURATION: 8,
+
+  // Biome
+  BIOME_DISTANCE: 500,
+
   // Colors - Dark mine tunnel Minecraft palette
   COLORS: {
     // Background
@@ -92,6 +105,22 @@ export const GAME_CONFIG = {
     TEXT_SHADOW: [0, 0, 0] as [number, number, number],
     BUTTON_GREEN: [76, 175, 80] as [number, number, number],
     BUTTON_HOVER: [56, 142, 60] as [number, number, number],
+
+    // Power-ups
+    SHIELD_BLUE: [80, 160, 255] as [number, number, number],
+    MAGNET_PURPLE: [180, 80, 255] as [number, number, number],
+    DOUBLE_ORANGE: [255, 160, 40] as [number, number, number],
+
+    // Biomes
+    NETHER_RED: [180, 40, 20] as [number, number, number],
+    NETHER_ORANGE: [255, 130, 30] as [number, number, number],
+    END_PURPLE: [100, 20, 160] as [number, number, number],
+    END_BLACK: [15, 5, 25] as [number, number, number],
+    CAVE_BLUE: [40, 50, 100] as [number, number, number],
+    CAVE_CRYSTAL: [140, 200, 255] as [number, number, number],
+
+    // Combo
+    COMBO_TEXT: [255, 100, 50] as [number, number, number],
   }
 }
 
