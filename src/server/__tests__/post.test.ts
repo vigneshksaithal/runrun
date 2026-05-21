@@ -14,7 +14,7 @@ test('createPost submits a custom post with correct params', async () => {
 
     expect(reddit.submitCustomPost).toHaveBeenCalledWith({
         subredditName,
-        title: 'Post Name',
+        title: 'MineRun - Can you beat the high score? ⛏️🏃',
         entry: 'default',
     })
     expect(result).toEqual({ id: 't3_abc123' })
