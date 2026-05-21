@@ -4,7 +4,7 @@ import { createStartScene } from './game/scenes/start'
 import { createGameScene } from './game/scenes/game'
 import { createDeathScene } from './game/scenes/death'
 
-// Initialize KaplayJS - full screen, no letterbox for Reddit webview
+// Initialize KaplayJS - let it create canvas on body naturally
 const k = kaplay({
   width: GAME_CONFIG.WIDTH,
   height: GAME_CONFIG.HEIGHT,
@@ -13,11 +13,7 @@ const k = kaplay({
   letterbox: false,
   crisp: true,
   touchToMouse: true,
-  canvas: document.createElement('canvas'),
 })
-
-// Append canvas to body
-document.body.appendChild(k.canvas)
 
 // Register scenes
 createStartScene(k)
