@@ -23,7 +23,7 @@
         "kaplay": "^3001.0.19"
     },
     "devDependencies": {
-        "@devvit/start": "0.12.23",
+        "@devvit/start": "0.12.24",
         "@devvit/test": "^0.12.23",
         "concurrently": "^9.2.1",
         "dotenv-cli": "^11.0.0",
