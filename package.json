@@ -24,7 +24,7 @@
     },
     "devDependencies": {
         "@devvit/start": "0.12.23",
-        "@devvit/test": "^0.12.23",
+        "@devvit/test": "^0.12.24",
         "concurrently": "^9.2.1",
         "dotenv-cli": "^11.0.0",
         "typescript": "6.0.3",
