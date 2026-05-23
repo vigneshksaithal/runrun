@@ -303,31 +303,6 @@
 		</div>
 	</div>
 
-	<script>
-		// Splash hide logic — multiple triggers, whichever fires first wins.
-		(function () {
-			var splash = document.getElementById('splash');
-			if (!splash) return;
-			var done = false;
-			function hide() {
-				if (done) return;
-				done = true;
-				splash.classList.add('hide');
-				setTimeout(function () {
-					if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
-				}, 400);
-			}
-			// Expose for main.ts to call once the game has started
-			window.__hideSplash = hide;
-
-			// Trigger 1: explicit event from main.ts
-			window.addEventListener('runrun:ready', hide);
-
-			// Trigger 2: hard timeout — splash should never block more than 2.5s.
-			// The game canvas paints in well under that on any device.
-			setTimeout(hide, 2500);
-		})();
-	</script>
 	<script type="module" src="./main.ts"></script>
 </body>
 
