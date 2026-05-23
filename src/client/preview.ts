@@ -1,4 +1,5 @@
 // Preview screen - opens game in expanded mode when clicked
+import { requestExpandedMode } from '@devvit/web/client'
 
 // Load high score and total coins from localStorage
 function loadStats(): void {
@@ -17,22 +18,15 @@ function loadStats(): void {
 }
 
 // Request expanded mode to launch the game
-function launchGame(event: Event): void {
+async function launchGame(event: MouseEvent): Promise<void> {
   event.preventDefault()
   event.stopPropagation()
 
-  // Devvit webview API to switch to expanded mode with the 'game' entrypoint
-  if (typeof window !== 'undefined' && 'parent' in window) {
-    window.parent.postMessage(
-      {
-        type: 'devvit-message',
-        data: {
-          type: 'webview:requestExpandedMode',
-          entrypoint: 'game'
-        }
-      },
-      '*'
-    )
+  try {
+    // Use Devvit's official client API to request expanded mode with the 'game' entrypoint
+    await requestExpandedMode(event, 'game')
+  } catch (e) {
+    console.error('Failed to expand:', e)
   }
 }
 
@@ -45,10 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const playBtn = document.getElementById('playBtn')
 
   if (playBtn) {
-    playBtn.addEventListener('click', launchGame)
+    playBtn.addEventListener('click', launchGame as EventListener)
   }
 
   if (preview) {
-    preview.addEventListener('click', launchGame)
+    preview.addEventListener('click', launchGame as EventListener)
   }
 })
