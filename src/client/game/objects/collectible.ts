@@ -68,42 +68,43 @@ export function updateCoin(k: KAPLAYCtx, coin: GameObj, speed: number, dt: numbe
   return coin.baseY > GAME_CONFIG.LANE_Y_BOTTOM + 50
 }
 
-export function createCoinCollectEffect(k: KAPLAYCtx, x: number, y: number) {
-  // 8 gold particles burst
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2
-    const speed = k.rand(80, 180)
+export function createCoinCollectEffect(k: KAPLAYCtx, x: number, y: number, multiplier: number = 1) {
+  // 6 stepped voxel chunks (no smooth tween - stepped positions)
+  const angles = [0, 60, 120, 180, 240, 300]
+  for (let i = 0; i < 6; i++) {
+    const angle = angles[i]! * (Math.PI / 180)
+    const speed = k.rand(100, 200)
+    const size = k.rand(5, 9)
 
     k.add([
-      k.rect(k.rand(4, 7), k.rand(4, 7)),
+      k.rect(size, size),
       k.pos(x, y),
       k.anchor('center'),
       k.color(...C.PARTICLE_GOLD),
       k.opacity(1),
       k.scale(1),
-      k.lifespan(0.35, { fade: 0.25 }),
+      k.lifespan(0.3, { fade: 0.2 }),
       k.move(k.Vec2.fromAngle(k.rad2deg(angle)), speed),
       k.z(150),
     ])
   }
 
-  // "+5" text flies up
+  // "+N" text with multiplier-aware value (3-step rise)
+  const pointValue = GAME_CONFIG.COIN_SCORE * multiplier
   const txt = k.add([
-    k.text('+5', { size: 18 }),
+    k.text(`+${pointValue}`, { size: 20 }),
     k.pos(x, y - 10),
     k.anchor('center'),
     k.color(...C.TEXT_GOLD),
     k.opacity(1),
-    k.scale(1),
-    k.lifespan(0.4, { fade: 0.3 }),
+    k.scale(1.4),
+    k.lifespan(0.45, { fade: 0.3 }),
     k.z(160),
   ])
 
-  k.tween(
-    txt.pos.y,
-    txt.pos.y - 30,
-    0.4,
-    (v) => { if (txt.exists()) txt.pos.y = v },
-    k.easings.easeOutQuad,
-  )
+  // Stepped rise: 3 discrete y positions instead of smooth tween
+  const startY = txt.pos.y
+  k.wait(0.1, () => { if (txt.exists()) txt.pos.y = startY - 12 })
+  k.wait(0.2, () => { if (txt.exists()) { txt.pos.y = startY - 24; txt.scale = k.vec2(1) } })
+  k.wait(0.3, () => { if (txt.exists()) txt.pos.y = startY - 36 })
 }

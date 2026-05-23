@@ -74,14 +74,17 @@ export const GAME_CONFIG = {
     COIN_DARK: [200, 150, 0] as [number, number, number],
     COIN_SHINE: [255, 255, 180] as [number, number, number],
 
-    // Obstacles - vivid red/magenta (unmistakable danger)
-    OBSTACLE_STONE: [220, 50, 60] as [number, number, number],
+    // Obstacles - three warm-glow hues by required action
+    OBSTACLE_STONE: [220, 50, 60] as [number, number, number],      // RED = jump over (stone wall)
     OBSTACLE_STONE_DARK: [160, 30, 40] as [number, number, number],
-    OBSTACLE_BEAM: [220, 50, 60] as [number, number, number],
-    OBSTACLE_BEAM_DARK: [160, 30, 40] as [number, number, number],
-    OBSTACLE_PILLAR: [220, 50, 60] as [number, number, number],
+    OBSTACLE_STONE_GLOW: [255, 80, 80] as [number, number, number],
+    OBSTACLE_BEAM: [255, 170, 40] as [number, number, number],       // AMBER = slide under (low beam)
+    OBSTACLE_BEAM_DARK: [180, 110, 20] as [number, number, number],
+    OBSTACLE_BEAM_GLOW: [255, 200, 80] as [number, number, number],
+    OBSTACLE_PILLAR: [200, 50, 180] as [number, number, number],     // MAGENTA = dodge sideways (pillar)
+    OBSTACLE_PILLAR_GLOW: [255, 100, 220] as [number, number, number],
     OBSTACLE_STRIPE: [255, 200, 50] as [number, number, number],
-    OBSTACLE_STRIPE_DARK: [160, 30, 40] as [number, number, number],
+    OBSTACLE_STRIPE_DARK: [200, 50, 180] as [number, number, number],
 
     // Torch/lighting
     TORCH_FLAME: [255, 160, 40] as [number, number, number],

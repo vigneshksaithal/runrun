@@ -1,8 +1,9 @@
 import type { KAPLAYCtx, GameObj } from 'kaplay'
-import { GAME_CONFIG, getLaneXAtDepth, getDepthScale } from '../config'
-import { createPlayer, jumpPlayer, slidePlayer, createDeathParticles } from '../objects/player'
-import { createCoin, updateCoin, createCoinCollectEffect } from '../objects/collectible'
-import { createObstacle, updateObstacle, type ObstacleType } from '../objects/obstacle'
+import { GAME_CONFIG, getDepthScale } from '../config'
+import { createPlayer, jumpPlayer, slidePlayer } from '../objects/player'
+import type { DeathPayload } from './death'
+import { updateCoin, createCoinCollectEffect } from '../objects/collectible'
+import { updateObstacle } from '../objects/obstacle'
 import { createInputSystem } from '../systems/input'
 import { createLaneSystem } from '../systems/lanes'
 import { createScoringSystem } from '../systems/scoring'
@@ -16,6 +17,7 @@ export function createGameScene(k: KAPLAYCtx) {
     let isJumping = false
     let isSliding = false
     let isDead = false
+    let ghostTimer = 0
 
     // Systems
     const input = createInputSystem(k)
@@ -157,40 +159,6 @@ export function createGameScene(k: KAPLAYCtx) {
       k.z(2),
     ])
 
-    // Torch lights (2 per side = 4 total) - bigger flames
-    function addTorch(x: number, y: number) {
-      // Torch stick
-      k.add([
-        k.rect(4, 20),
-        k.pos(x, y + 14),
-        k.anchor('center'),
-        k.color(...C.TORCH_STICK),
-        k.z(3),
-      ])
-      // Flame rect (bigger)
-      k.add([
-        k.rect(10, 16),
-        k.pos(x, y),
-        k.anchor('center'),
-        k.color(...C.TORCH_FLAME),
-        k.opacity(0.9),
-        k.z(3),
-      ])
-      // Glow rect (bigger)
-      k.add([
-        k.rect(28, 28),
-        k.pos(x, y),
-        k.anchor('center'),
-        k.color(...C.TORCH_GLOW),
-        k.opacity(0.18),
-        k.z(2),
-      ])
-    }
-    addTorch(55, 300)
-    addTorch(55, 550)
-    addTorch(GAME_CONFIG.WIDTH - 55, 300)
-    addTorch(GAME_CONFIG.WIDTH - 55, 550)
-
     // === ROAD LINES ===
     const roadLines: GameObj[] = []
     for (let i = 0; i < GAME_CONFIG.ROAD_LINE_COUNT; i++) {
@@ -269,6 +237,27 @@ export function createGameScene(k: KAPLAYCtx) {
       k.z(200),
     ])
 
+    // Heart icons (3 lives) - top right
+    const hearts: GameObj[] = []
+    for (let i = 0; i < 3; i++) {
+      const heart = k.add([
+        k.rect(14, 14),
+        k.pos(GAME_CONFIG.WIDTH - 24 - i * 22, 30),
+        k.anchor('center'),
+        k.color(220, 50, 60),
+        k.opacity(1),
+        k.z(200),
+      ])
+      // Small notch to make it look heart-like
+      heart.add([
+        k.rect(6, 6),
+        k.pos(0, 4),
+        k.anchor('center'),
+        k.color(220, 50, 60),
+      ])
+      hearts.push(heart)
+    }
+
     let comboText: GameObj | null = null
 
     // === SPEED LINES (only above speed 8) ===
@@ -298,9 +287,33 @@ export function createGameScene(k: KAPLAYCtx) {
       }
 
       // Update lane position
-      lanes.update()
+      lanes.update(dt)
       if (player.exists()) {
         player.pos.x = lanes.getCurrentX()
+        // Apply tilt rotation
+        player.angle = lanes.getTilt()
+
+        // Ghost trail during lane change
+        if (lanes.isLaneChanging()) {
+          ghostTimer += dt
+          if (ghostTimer >= 0.04) {
+            ghostTimer = 0
+            const ghost = k.add([
+              k.rect(38, 60),
+              k.pos(player.pos.x, player.pos.y - 30),
+              k.anchor('center'),
+              k.color(...C.PLAYER_BODY),
+              k.opacity(0.3),
+              k.scale(1),
+              k.z(90),
+              k.lifespan(0.15, { fade: 0.12 }),
+            ])
+            ghost.angle = player.angle
+            void ghost
+          }
+        } else {
+          ghostTimer = 0
+        }
       }
 
       // Update scoring
@@ -382,7 +395,7 @@ export function createGameScene(k: KAPLAYCtx) {
         const dx = Math.abs(coin.pos.x - player.pos.x)
         const dy = Math.abs(coin.pos.y - player.pos.y)
         if (dx < 35 && dy < 45) {
-          createCoinCollectEffect(k, coin.pos.x, coin.pos.y)
+          createCoinCollectEffect(k, coin.pos.x, coin.pos.y, scoring.getMultiplier())
           coin.destroy()
           scoring.addCoin()
         }
@@ -410,134 +423,79 @@ export function createGameScene(k: KAPLAYCtx) {
         if (type === 'low_beam' && isSliding) continue
         // Pillar: must switch lanes (already checked lane above)
 
-        // COLLISION - DEATH
-        handleDeath(obs)
+        // COLLISION - HIT
+        handleHit(obs)
         break
       }
     })
 
-    // === DEATH HANDLER (inline) ===
-    function handleDeath(_obs: GameObj) {
+    // === HIT HANDLER (loses a life, or dies) ===
+    function handleHit(obs: GameObj) {
       if (isDead) return
-      isDead = true
 
-      const finalScore = scoring.finalize()
-      const px = player.pos.x
-      const py = player.pos.y
+      const stillAlive = scoring.loseLife()
 
-      // 1. Explode player into particles
-      if (player.exists()) {
-        player.destroy()
+      // Update heart display
+      const currentLives = scoring.getLives()
+      for (let i = 0; i < hearts.length; i++) {
+        if (hearts[i].exists()) {
+          hearts[i].opacity = i < currentLives ? 1 : 0.2
+        }
       }
-      createDeathParticles(k, px, py)
 
-      // 2. Screen shake
-      k.shake(8)
+      // Destroy the obstacle that hit us
+      if (obs.exists()) obs.destroy()
 
-      // 3. Red flash (0.2s)
-      const flash = k.add([
-        k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
-        k.pos(0, 0),
-        k.color(200, 30, 30),
-        k.opacity(0.4),
-        k.z(250),
-      ])
-      k.wait(0.2, () => {
-        if (flash.exists()) flash.destroy()
-      })
-
-      // 4. Dark overlay with score (0.3s delay)
-      k.wait(0.3, () => {
-        const overlay = k.add([
+      if (stillAlive) {
+        // Flash red briefly + shake (hit feedback)
+        k.shake(5)
+        const hitFlash = k.add([
           k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
           k.pos(0, 0),
-          k.color(12, 20, 18),
-          k.opacity(0.8),
-          k.z(260),
+          k.color(220, 40, 40),
+          k.opacity(0.3),
+          k.z(250),
         ])
-        void overlay
+        k.wait(0.15, () => { if (hitFlash.exists()) hitFlash.destroy() })
 
-        // Score display
-        k.add([
-          k.text('GAME OVER', { size: 36 }),
-          k.pos(GAME_CONFIG.WIDTH / 2, 280),
-          k.anchor('center'),
-          k.color(...C.TEXT_WHITE),
-          k.z(270),
-        ])
+        // Brief invulnerability
+        isDead = true
+        if (player.exists()) {
+          // Blink player
+          let blinkCount = 0
+          const blinkInterval = setInterval(() => {
+            if (player.exists()) {
+              player.opacity = player.opacity < 0.5 ? 1 : 0.3
+            }
+            blinkCount++
+            if (blinkCount >= 8) {
+              clearInterval(blinkInterval)
+              if (player.exists()) player.opacity = 1
+              isDead = false
+            }
+          }, 80)
+        }
+      } else {
+        // Final death
+        isDead = true
+        const finalScore = scoring.finalize()
+        const px = player.exists() ? player.pos.x : GAME_CONFIG.VANISHING_POINT_X
+        const py = player.exists() ? player.pos.y : GAME_CONFIG.PLAYER_Y
 
-        k.add([
-          k.text(`Score: ${finalScore}`, { size: 28 }),
-          k.pos(GAME_CONFIG.WIDTH / 2, 340),
-          k.anchor('center'),
-          k.color(...C.TEXT_GOLD),
-          k.z(270),
-        ])
-
-        if (scoring.isNewHighScore()) {
-          k.add([
-            k.text('NEW BEST!', { size: 22 }),
-            k.pos(GAME_CONFIG.WIDTH / 2, 380),
-            k.anchor('center'),
-            k.color(...C.COMBO_TEXT),
-            k.z(270),
-          ])
+        if (player.exists()) {
+          player.destroy()
         }
 
-        k.add([
-          k.text(`Coins: ${scoring.getCoins()}`, { size: 20 }),
-          k.pos(GAME_CONFIG.WIDTH / 2, 420),
-          k.anchor('center'),
-          k.color(...C.TEXT_GOLD),
-          k.z(270),
-        ])
+        const payload: DeathPayload = {
+          score: finalScore,
+          coins: scoring.getCoins(),
+          isNewHigh: scoring.isNewHighScore(),
+          playerX: px,
+          playerY: py,
+        }
 
-        // 5. TAP TO PLAY pulsing text
-        const tapText = k.add([
-          k.text('TAP TO PLAY', { size: 24 }),
-          k.pos(GAME_CONFIG.WIDTH / 2, 520),
-          k.anchor('center'),
-          k.color(...C.TEXT_WHITE),
-          k.opacity(1),
-          k.scale(1),
-          k.z(270),
-        ])
-
-        let tapPulse = 0
-        tapText.onUpdate(() => {
-          tapPulse += k.dt() * 3
-          tapText.opacity = 0.5 + Math.sin(tapPulse) * 0.5
-        })
-
-        // 6. Allow tap to restart
-        let canRestart = true
-        k.onKeyPress(() => {
-          if (canRestart) {
-            canRestart = false
-            k.go('game')
-          }
-        })
-        k.onMousePress(() => {
-          if (canRestart) {
-            canRestart = false
-            k.go('game')
-          }
-        })
-        k.onTouchStart(() => {
-          if (canRestart) {
-            canRestart = false
-            k.go('game')
-          }
-        })
-
-        // 7. Auto-restart after 2.0 seconds
-        k.wait(2.0, () => {
-          if (canRestart) {
-            canRestart = false
-            k.go('game')
-          }
-        })
-      })
+        k.go('death', payload)
+      }
     }
   })
 }
