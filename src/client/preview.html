@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>RunRun - Endless Runner</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			touch-action: none;
+			-webkit-touch-callout: none;
+			-webkit-user-select: none;
+			user-select: none;
+		}
+
+		.preview-container {
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(180deg, #0f1928 0%, #142332 40%, #1a3040 100%);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			position: relative;
+			overflow: hidden;
+			cursor: pointer;
+		}
+
+		/* Animated background elements */
+		.bg-layer {
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+		}
+
+		/* Floating crystals */
+		.crystal {
+			position: absolute;
+			border-radius: 2px;
+			animation: float 4s ease-in-out infinite;
+		}
+
+		.crystal-1 {
+			width: 12px;
+			height: 28px;
+			background: linear-gradient(135deg, #64b4ff 0%, #4a8acc 100%);
+			left: 8%;
+			top: 25%;
+			animation-delay: 0s;
+			box-shadow: 0 0 20px rgba(100, 180, 255, 0.4);
+		}
+
+		.crystal-2 {
+			width: 10px;
+			height: 22px;
+			background: linear-gradient(135deg, #a064ff 0%, #7844cc 100%);
+			right: 12%;
+			top: 35%;
+			animation-delay: 1s;
+			box-shadow: 0 0 18px rgba(160, 100, 255, 0.4);
+		}
+
+		.crystal-3 {
+			width: 14px;
+			height: 32px;
+			background: linear-gradient(135deg, #50ffa0 0%, #30cc70 100%);
+			left: 15%;
+			bottom: 30%;
+			animation-delay: 2s;
+			box-shadow: 0 0 22px rgba(80, 255, 160, 0.4);
+		}
+
+		.crystal-4 {
+			width: 8px;
+			height: 18px;
+			background: linear-gradient(135deg, #64b4ff 0%, #4a8acc 100%);
+			right: 18%;
+			bottom: 25%;
+			animation-delay: 0.5s;
+			box-shadow: 0 0 15px rgba(100, 180, 255, 0.4);
+		}
+
+		.crystal-5 {
+			width: 10px;
+			height: 24px;
+			background: linear-gradient(135deg, #50ffa0 0%, #30cc70 100%);
+			right: 8%;
+			top: 60%;
+			animation-delay: 1.5s;
+			box-shadow: 0 0 18px rgba(80, 255, 160, 0.4);
+		}
+
+		@keyframes float {
+
+			0%,
+			100% {
+				transform: translateY(0) rotate(-5deg);
+			}
+
+			50% {
+				transform: translateY(-15px) rotate(5deg);
+			}
+		}
+
+		/* Dust particles */
+		.particle {
+			position: absolute;
+			width: 4px;
+			height: 4px;
+			background: rgba(80, 200, 160, 0.3);
+			border-radius: 50%;
+			animation: drift 8s linear infinite;
+		}
+
+		.particle:nth-child(1) {
+			left: 20%;
+			animation-delay: 0s;
+		}
+
+		.particle:nth-child(2) {
+			left: 40%;
+			animation-delay: 2s;
+		}
+
+		.particle:nth-child(3) {
+			left: 60%;
+			animation-delay: 4s;
+		}
+
+		.particle:nth-child(4) {
+			left: 80%;
+			animation-delay: 6s;
+		}
+
+		@keyframes drift {
+			0% {
+				transform: translateY(100vh) scale(0.5);
+				opacity: 0;
+			}
+
+			10% {
+				opacity: 0.6;
+			}
+
+			90% {
+				opacity: 0.6;
+			}
+
+			100% {
+				transform: translateY(-20px) scale(1);
+				opacity: 0;
+			}
+		}
+
+		/* Main content */
+		.content {
+			position: relative;
+			z-index: 10;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 20px;
+			padding: 20px;
+		}
+
+		/* Runner character preview */
+		.runner-container {
+			position: relative;
+			width: 80px;
+			height: 120px;
+			animation: bounce 1s ease-in-out infinite;
+		}
+
+		@keyframes bounce {
+
+			0%,
+			100% {
+				transform: translateY(0);
+			}
+
+			50% {
+				transform: translateY(-12px);
+			}
+		}
+
+		.runner-hair {
+			position: absolute;
+			width: 50px;
+			height: 12px;
+			background: #ff7828;
+			border-radius: 4px 4px 0 0;
+			left: 50%;
+			top: 0;
+			transform: translateX(-50%);
+		}
+
+		.runner-head {
+			position: absolute;
+			width: 50px;
+			height: 38px;
+			background: #e6b99b;
+			border-radius: 6px;
+			left: 50%;
+			top: 12px;
+			transform: translateX(-50%);
+		}
+
+		.runner-eyes {
+			position: absolute;
+			top: 12px;
+			left: 50%;
+			transform: translateX(-50%);
+			display: flex;
+			gap: 14px;
+		}
+
+		.eye {
+			width: 8px;
+			height: 8px;
+			background: #141414;
+			border-radius: 50%;
+		}
+
+		.runner-body {
+			position: absolute;
+			width: 56px;
+			height: 44px;
+			background: #32c8dc;
+			border-radius: 8px;
+			left: 50%;
+			top: 50px;
+			transform: translateX(-50%);
+		}
+
+		.runner-legs {
+			position: absolute;
+			width: 44px;
+			height: 24px;
+			background: #2864b4;
+			border-radius: 4px;
+			left: 50%;
+			bottom: 0;
+			transform: translateX(-50%);
+		}
+
+		/* Speed lines behind runner */
+		.speed-lines {
+			position: absolute;
+			left: -30px;
+			top: 50%;
+			transform: translateY(-50%);
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			animation: speedPulse 0.8s ease-in-out infinite;
+		}
+
+		@keyframes speedPulse {
+
+			0%,
+			100% {
+				opacity: 0.4;
+				transform: translateY(-50%) translateX(0);
+			}
+
+			50% {
+				opacity: 0.8;
+				transform: translateY(-50%) translateX(-5px);
+			}
+		}
+
+		.speed-line {
+			height: 3px;
+			background: linear-gradient(90deg, transparent 0%, rgba(150, 220, 255, 0.8) 100%);
+			border-radius: 2px;
+		}
+
+		.speed-line:nth-child(1) {
+			width: 25px;
+		}
+
+		.speed-line:nth-child(2) {
+			width: 35px;
+		}
+
+		.speed-line:nth-child(3) {
+			width: 20px;
+		}
+
+		/* Title */
+		.title {
+			font-size: 42px;
+			font-weight: 800;
+			letter-spacing: 4px;
+			color: #ffffff;
+			text-shadow:
+				0 0 40px rgba(80, 255, 160, 0.5),
+				0 4px 0 rgba(50, 200, 100, 0.3);
+			margin-top: 10px;
+		}
+
+		/* Subtitle */
+		.subtitle {
+			font-size: 16px;
+			color: #50dcc8;
+			letter-spacing: 1px;
+			opacity: 0.9;
+		}
+
+		/* Play button */
+		.play-btn {
+			position: relative;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			padding: 16px 48px;
+			background: linear-gradient(180deg, #32c864 0%, #238a46 100%);
+			border: none;
+			border-radius: 12px;
+			color: white;
+			font-size: 22px;
+			font-weight: 700;
+			letter-spacing: 2px;
+			cursor: pointer;
+			box-shadow:
+				0 6px 0 #1a6632,
+				0 8px 20px rgba(50, 200, 100, 0.4);
+			transition: all 0.15s ease;
+			margin-top: 10px;
+			animation: pulse 2s ease-in-out infinite;
+		}
+
+		@keyframes pulse {
+
+			0%,
+			100% {
+				transform: scale(1);
+			}
+
+			50% {
+				transform: scale(1.03);
+			}
+		}
+
+		.play-btn:hover {
+			transform: translateY(-2px) scale(1.05);
+			box-shadow:
+				0 8px 0 #1a6632,
+				0 12px 30px rgba(50, 200, 100, 0.5);
+		}
+
+		.play-btn:active {
+			transform: translateY(4px);
+			box-shadow:
+				0 2px 0 #1a6632,
+				0 4px 10px rgba(50, 200, 100, 0.3);
+		}
+
+		.play-icon {
+			width: 0;
+			height: 0;
+			border-left: 14px solid white;
+			border-top: 9px solid transparent;
+			border-bottom: 9px solid transparent;
+			margin-right: 4px;
+		}
+
+		/* Stats row */
+		.stats {
+			display: flex;
+			gap: 30px;
+			margin-top: 15px;
+		}
+
+		.stat {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 4px;
+		}
+
+		.stat-icon {
+			width: 24px;
+			height: 24px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.coin-icon {
+			width: 18px;
+			height: 14px;
+			background: linear-gradient(135deg, #ffc800 0%, #c89600 100%);
+			border-radius: 3px;
+			box-shadow: 0 0 10px rgba(255, 200, 0, 0.5);
+		}
+
+		.trophy-icon {
+			width: 16px;
+			height: 18px;
+			background: linear-gradient(135deg, #ffd24a 0%, #c8a030 100%);
+			border-radius: 2px 2px 4px 4px;
+			position: relative;
+		}
+
+		.trophy-icon::before {
+			content: '';
+			position: absolute;
+			top: -4px;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 20px;
+			height: 6px;
+			background: inherit;
+			border-radius: 2px;
+		}
+
+		.stat-value {
+			font-size: 18px;
+			font-weight: 700;
+			color: #ffd24a;
+		}
+
+		.stat-label {
+			font-size: 11px;
+			color: rgba(255, 255, 255, 0.6);
+			text-transform: uppercase;
+			letter-spacing: 1px;
+		}
+
+		/* Controls hint */
+		.controls {
+			position: absolute;
+			bottom: 20px;
+			left: 50%;
+			transform: translateX(-50%);
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			color: rgba(80, 180, 160, 0.7);
+			font-size: 13px;
+		}
+
+		.swipe-icon {
+			width: 20px;
+			height: 20px;
+			border: 2px solid currentColor;
+			border-radius: 4px;
+			position: relative;
+		}
+
+		.swipe-icon::after {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: 8px;
+			height: 8px;
+			background: currentColor;
+			border-radius: 2px;
+		}
+
+		/* Track preview */
+		.track-preview {
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			height: 40%;
+			background: linear-gradient(180deg,
+					transparent 0%,
+					rgba(30, 40, 38, 0.5) 30%,
+					rgba(45, 55, 50, 0.8) 100%);
+			pointer-events: none;
+		}
+
+		.lane-lines {
+			position: absolute;
+			bottom: 60px;
+			left: 50%;
+			transform: translateX(-50%);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 15px;
+			opacity: 0.3;
+		}
+
+		.lane-line {
+			height: 2px;
+			background: #50dcc8;
+			border-radius: 1px;
+		}
+
+		.lane-line:nth-child(1) {
+			width: 40px;
+		}
+
+		.lane-line:nth-child(2) {
+			width: 80px;
+		}
+
+		.lane-line:nth-child(3) {
+			width: 140px;
+		}
+
+		.lane-line:nth-child(4) {
+			width: 220px;
+		}
+
+		/* Wall accents */
+		.wall-left,
+		.wall-right {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			width: 40px;
+			pointer-events: none;
+		}
+
+		.wall-left {
+			left: 0;
+			background: linear-gradient(90deg, #14281f 0%, transparent 100%);
+		}
+
+		.wall-right {
+			right: 0;
+			background: linear-gradient(-90deg, #14281f 0%, transparent 100%);
+		}
+
+		.wall-accent {
+			position: absolute;
+			width: 4px;
+			background: rgba(60, 180, 120, 0.5);
+		}
+
+		.wall-left .wall-accent {
+			right: 10px;
+			top: 0;
+			bottom: 0;
+		}
+
+		.wall-right .wall-accent {
+			left: 10px;
+			top: 0;
+			bottom: 0;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="preview-container" id="preview">
+		<!-- Background elements -->
+		<div class="bg-layer">
+			<!-- Crystals -->
+			<div class="crystal crystal-1"></div>
+			<div class="crystal crystal-2"></div>
+			<div class="crystal crystal-3"></div>
+			<div class="crystal crystal-4"></div>
+			<div class="crystal crystal-5"></div>
+
+			<!-- Particles -->
+			<div class="particle"></div>
+			<div class="particle"></div>
+			<div class="particle"></div>
+			<div class="particle"></div>
+		</div>
+
+		<!-- Wall accents -->
+		<div class="wall-left">
+			<div class="wall-accent"></div>
+		</div>
+		<div class="wall-right">
+			<div class="wall-accent"></div>
+		</div>
+
+		<!-- Track preview -->
+		<div class="track-preview">
+			<div class="lane-lines">
+				<div class="lane-line"></div>
+				<div class="lane-line"></div>
+				<div class="lane-line"></div>
+				<div class="lane-line"></div>
+			</div>
+		</div>
+
+		<!-- Main content -->
+		<div class="content">
+			<!-- Runner character -->
+			<div class="runner-container">
+				<div class="speed-lines">
+					<div class="speed-line"></div>
+					<div class="speed-line"></div>
+					<div class="speed-line"></div>
+				</div>
+				<div class="runner-hair"></div>
+				<div class="runner-head">
+					<div class="runner-eyes">
+						<div class="eye"></div>
+						<div class="eye"></div>
+					</div>
+				</div>
+				<div class="runner-body"></div>
+				<div class="runner-legs"></div>
+			</div>
+
+			<!-- Title -->
+			<h1 class="title">RUNRUN</h1>
+			<p class="subtitle">How far can you run?</p>
+
+			<!-- Play button -->
+			<button class="play-btn" id="playBtn">
+				<span class="play-icon"></span>
+				PLAY
+			</button>
+
+			<!-- Stats -->
+			<div class="stats">
+				<div class="stat">
+					<div class="stat-icon">
+						<div class="trophy-icon"></div>
+					</div>
+					<span class="stat-value" id="highScore">0</span>
+					<span class="stat-label">Best</span>
+				</div>
+				<div class="stat">
+					<div class="stat-icon">
+						<div class="coin-icon"></div>
+					</div>
+					<span class="stat-value" id="totalCoins">0</span>
+					<span class="stat-label">Coins</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Controls hint -->
+		<div class="controls">
+			<div class="swipe-icon"></div>
+			<span>Swipe or Arrow Keys to play</span>
+		</div>
+	</div>
+
+	<script type="module" src="./preview.ts"></script>
+</body>
+
+</html>

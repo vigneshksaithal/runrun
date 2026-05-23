@@ -1,6 +1,7 @@
 import { GAME_CONFIG } from '../config'
 
 const STORAGE_KEY = 'runrun_highscore'
+const COINS_STORAGE_KEY = 'runrun_total_coins'
 
 export function createScoringSystem() {
   let score = 0
@@ -22,6 +23,16 @@ export function createScoringSystem() {
   function saveHighScore() {
     try {
       localStorage.setItem(STORAGE_KEY, String(highScore))
+    } catch {
+      // localStorage may not be available
+    }
+  }
+
+  function saveTotalCoins(sessionCoins: number) {
+    try {
+      const current = localStorage.getItem(COINS_STORAGE_KEY)
+      const total = (current ? parseInt(current, 10) : 0) + sessionCoins
+      localStorage.setItem(COINS_STORAGE_KEY, String(total))
     } catch {
       // localStorage may not be available
     }
@@ -84,6 +95,8 @@ export function createScoringSystem() {
         highScore = finalScore
         saveHighScore()
       }
+      // Save collected coins to total
+      saveTotalCoins(coinsCollected)
       return finalScore
     },
 
