@@ -19,6 +19,7 @@
 			-webkit-touch-callout: none;
 			-webkit-user-select: none;
 			user-select: none;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 		}
 		canvas {
 			display: block;
@@ -29,11 +30,306 @@
 			left: 0;
 			touch-action: none;
 		}
+
+		/* ─── Animated splash shown until Kaplay's canvas is ready ─── */
+		#splash {
+			position: fixed;
+			inset: 0;
+			z-index: 999;
+			background:
+				linear-gradient(180deg,
+					#0f1928 0%,
+					#142332 33%,
+					#192d37 66%,
+					#1c3640 100%);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+			transition: opacity 350ms ease-out;
+		}
+		#splash.hide {
+			opacity: 0;
+			pointer-events: none;
+		}
+
+		.splash-stage {
+			position: relative;
+			width: 100%;
+			max-width: 600px;
+			height: 100%;
+			max-height: 800px;
+			overflow: hidden;
+		}
+
+		/* Receding lane lines */
+		.lane {
+			position: absolute;
+			left: 50%;
+			bottom: 0;
+			width: 4px;
+			background: #50dcc8;
+			transform-origin: bottom center;
+			animation: laneRush 0.45s linear infinite;
+			box-shadow: 0 0 8px rgba(80, 220, 200, 0.5);
+		}
+		.lane.l1 { transform: translateX(-50%) skewX(-22deg); height: 60%; }
+		.lane.l2 { transform: translateX(-50%) skewX(22deg);  height: 60%; }
+		.lane.l3 {
+			transform: translateX(-50%);
+			height: 60%;
+			animation: laneCenter 0.45s linear infinite;
+		}
+
+		@keyframes laneRush {
+			0%   { opacity: 0.15; }
+			50%  { opacity: 0.6; }
+			100% { opacity: 0.15; }
+		}
+		@keyframes laneCenter {
+			0%, 100% { opacity: 0.7; }
+			50%      { opacity: 0.3; }
+		}
+
+		/* Speed lines whooshing past */
+		.speed-line {
+			position: absolute;
+			width: 80px;
+			height: 2px;
+			background: linear-gradient(90deg, transparent, rgba(150, 220, 255, 0.6), transparent);
+			animation: speed 0.4s linear infinite;
+		}
+		.speed-line:nth-child(1) { top: 25%; left: -80px; animation-delay: 0s; }
+		.speed-line:nth-child(2) { top: 38%; left: -80px; animation-delay: 0.1s; }
+		.speed-line:nth-child(3) { top: 52%; left: -80px; animation-delay: 0.2s; }
+		.speed-line:nth-child(4) { top: 18%; left: -80px; animation-delay: 0.3s; }
+
+		@keyframes speed {
+			0%   { transform: translateX(0);    opacity: 0; }
+			20%  { opacity: 1; }
+			100% { transform: translateX(800px); opacity: 0; }
+		}
+
+		/* Floating particles (gold + green + cyan) */
+		.particle {
+			position: absolute;
+			width: 5px;
+			height: 5px;
+			border-radius: 1px;
+			animation: float 4s ease-in-out infinite;
+		}
+		.particle.gold  { background: #ffdc50; box-shadow: 0 0 6px #ffdc50; }
+		.particle.green { background: #50ffa0; box-shadow: 0 0 6px #50ffa0; }
+		.particle.cyan  { background: #50dcc8; box-shadow: 0 0 6px #50dcc8; }
+
+		.particle:nth-child(1)  { top: 12%; left: 18%; animation-delay: 0s; }
+		.particle:nth-child(2)  { top: 28%; left: 78%; animation-delay: 0.4s; }
+		.particle:nth-child(3)  { top: 44%; left: 12%; animation-delay: 0.8s; }
+		.particle:nth-child(4)  { top: 62%; left: 84%; animation-delay: 1.2s; }
+		.particle:nth-child(5)  { top: 22%; left: 60%; animation-delay: 1.6s; }
+		.particle:nth-child(6)  { top: 38%; left: 30%; animation-delay: 2.0s; }
+		.particle:nth-child(7)  { top: 70%; left: 72%; animation-delay: 0.6s; }
+		.particle:nth-child(8)  { top: 16%; left: 45%; animation-delay: 1.0s; }
+
+		@keyframes float {
+			0%, 100% { transform: translate(0, 0); opacity: 0.3; }
+			50%      { transform: translate(8px, -30px); opacity: 0.9; }
+		}
+
+		/* The runner - stylized to match the in-game player */
+		.runner {
+			position: absolute;
+			left: 50%;
+			bottom: 22%;
+			transform: translateX(-50%);
+			animation: runnerBounce 0.5s ease-in-out infinite;
+		}
+
+		@keyframes runnerBounce {
+			0%, 100% { transform: translateX(-50%) translateY(0); }
+			50%      { transform: translateX(-50%) translateY(-12px); }
+		}
+
+		/* Dust puffs behind runner */
+		.dust {
+			position: absolute;
+			left: 50%;
+			bottom: calc(22% - 4px);
+			width: 14px;
+			height: 14px;
+			border-radius: 50%;
+			background: rgba(80, 200, 160, 0.5);
+			animation: dustPuff 0.55s ease-out infinite;
+		}
+		.dust.d1 { transform: translateX(-50%); animation-delay: 0s; }
+		.dust.d2 { transform: translateX(-50%); animation-delay: 0.18s; }
+		.dust.d3 { transform: translateX(-50%); animation-delay: 0.36s; }
+
+		@keyframes dustPuff {
+			0%   { transform: translate(-50%, 0)       scale(0.4); opacity: 0.7; }
+			100% { transform: translate(-110%, 14px)   scale(1.6); opacity: 0;   }
+		}
+
+		/* Brand block */
+		.brand {
+			position: absolute;
+			top: 18%;
+			left: 50%;
+			transform: translateX(-50%);
+			text-align: center;
+			color: #fff;
+			pointer-events: none;
+			text-shadow: 0 0 24px rgba(80, 255, 160, 0.55);
+		}
+		.brand h1 {
+			font-size: 56px;
+			font-weight: 900;
+			letter-spacing: 4px;
+			margin: 0;
+			background: linear-gradient(180deg, #ffffff 0%, #50ffa0 100%);
+			-webkit-background-clip: text;
+			background-clip: text;
+			-webkit-text-fill-color: transparent;
+			animation: titleGlow 2.4s ease-in-out infinite;
+		}
+		.brand p {
+			margin-top: 8px;
+			font-size: 16px;
+			color: #50dcc8;
+			letter-spacing: 2px;
+			opacity: 0.85;
+		}
+
+		@keyframes titleGlow {
+			0%, 100% { filter: drop-shadow(0 0 8px rgba(80, 255, 160, 0.4)); }
+			50%      { filter: drop-shadow(0 0 18px rgba(80, 255, 160, 0.9)); }
+		}
+
+		/* Loading dots */
+		.loading {
+			position: absolute;
+			bottom: 8%;
+			left: 50%;
+			transform: translateX(-50%);
+			color: #50dcc8;
+			font-size: 13px;
+			letter-spacing: 3px;
+			opacity: 0.7;
+		}
+		.loading::after {
+			content: '';
+			display: inline-block;
+			width: 24px;
+			text-align: left;
+			animation: dots 1.4s steps(4, end) infinite;
+		}
+		@keyframes dots {
+			0%   { content: ''; }
+			25%  { content: '.'; }
+			50%  { content: '..'; }
+			75%  { content: '...'; }
+		}
+
+		/* Runner SVG part animations (defined globally so they apply when
+		   the SVG is inlined in the HTML — Safari/older browsers don't
+		   always honor <style> inside <svg>) */
+		.arm-back  { animation: armBack  0.32s ease-in-out infinite; transform-origin: 15px 56px; transform-box: fill-box; }
+		.arm-front { animation: armFront 0.32s ease-in-out infinite; transform-origin: 65px 56px; transform-box: fill-box; }
+		.leg-back  { animation: legBack  0.32s ease-in-out infinite; transform-origin: 29px 82px; transform-box: fill-box; }
+		.leg-front { animation: legFront 0.32s ease-in-out infinite; transform-origin: 51px 82px; transform-box: fill-box; }
+
+		@keyframes armBack  { 0%,100% { transform: rotate(35deg);  } 50% { transform: rotate(-30deg); } }
+		@keyframes armFront { 0%,100% { transform: rotate(-30deg); } 50% { transform: rotate(35deg);  } }
+		@keyframes legBack  { 0%,100% { transform: rotate(-25deg); } 50% { transform: rotate(25deg);  } }
+		@keyframes legFront { 0%,100% { transform: rotate(25deg);  } 50% { transform: rotate(-25deg); } }
 	</style>
 </head>
 
 <body>
+	<div id="splash" aria-hidden="true">
+		<div class="splash-stage">
+			<!-- Receding lanes (perspective lines) -->
+			<div class="lane l1"></div>
+			<div class="lane l2"></div>
+			<div class="lane l3"></div>
+
+			<!-- Speed motion lines -->
+			<div class="speed-line"></div>
+			<div class="speed-line"></div>
+			<div class="speed-line"></div>
+			<div class="speed-line"></div>
+
+			<!-- Ambient particles -->
+			<div class="particle gold"></div>
+			<div class="particle cyan"></div>
+			<div class="particle green"></div>
+			<div class="particle gold"></div>
+			<div class="particle cyan"></div>
+			<div class="particle green"></div>
+			<div class="particle gold"></div>
+			<div class="particle cyan"></div>
+
+			<!-- Dust puffs behind runner -->
+			<div class="dust d1"></div>
+			<div class="dust d2"></div>
+			<div class="dust d3"></div>
+
+			<!-- Animated SVG runner (mirrors in-game player) -->
+			<svg class="runner" width="80" height="120" viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg" aria-label="Running character">
+				<!-- Hair -->
+				<rect x="22" y="10"  width="36" height="10" rx="2" fill="#ff7828"/>
+				<!-- Head -->
+				<rect x="22" y="20"  width="36" height="28" rx="3" fill="#e6b99b"/>
+				<!-- Eye -->
+				<rect x="46" y="32"  width="4"  height="4" fill="#141414"/>
+				<!-- Body -->
+				<rect x="20" y="48"  width="40" height="34" rx="4" fill="#32c8dc"/>
+				<!-- Arms (animated) -->
+				<rect class="arm-back"  x="10" y="52" width="10" height="22" rx="3" fill="#28a0b8"/>
+				<rect class="arm-front" x="60" y="52" width="10" height="22" rx="3" fill="#32c8dc"/>
+				<!-- Legs (animated) -->
+				<rect class="leg-back"  x="22" y="82" width="14" height="26" rx="3" fill="#2864b4"/>
+				<rect class="leg-front" x="44" y="82" width="14" height="26" rx="3" fill="#3278d0"/>
+			</svg>
+
+			<!-- Brand title -->
+			<div class="brand">
+				<h1>RUNRUN</h1>
+				<p>HOW FAR CAN YOU RUN?</p>
+			</div>
+
+			<!-- Loading indicator -->
+			<div class="loading">LOADING</div>
+		</div>
+	</div>
+
 	<script type="module" src="./main.ts"></script>
+	<script>
+		// Hide splash once the game canvas mounts (Kaplay creates the canvas
+		// inside <body>). We watch for it; on detection we wait a brief moment
+		// to let the first frame paint, then fade out.
+		(function () {
+			var splash = document.getElementById('splash');
+			if (!splash) return;
+			var done = false;
+			function hide() {
+				if (done) return;
+				done = true;
+				splash.classList.add('hide');
+				setTimeout(function () { splash.remove(); }, 400);
+			}
+			var mo = new MutationObserver(function () {
+				if (document.querySelector('canvas')) {
+					mo.disconnect();
+					// Give the game one paint cycle to draw its first frame
+					setTimeout(hide, 250);
+				}
+			});
+			mo.observe(document.body, { childList: true, subtree: true });
+			// Hard fallback in case detection misses
+			setTimeout(hide, 5000);
+		})();
+	</script>
 </body>
 
 </html>
