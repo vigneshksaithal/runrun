@@ -27,54 +27,9 @@
 			position: absolute;
 			top: 0;
 			left: 0;
-			/* Allow vertical scroll to pass through to the Reddit parent
-			   while still capturing horizontal swipes for the game. */
-			touch-action: pan-y;
-			overscroll-behavior: contain;
+			touch-action: none;
 		}
 	</style>
-
-	<!--
-	  CRITICAL: This script must run BEFORE Kaplay loads so it can
-	  intercept addEventListener calls and force wheel / touch listeners
-	  to be passive. Kaplay attaches non-passive listeners that call
-	  preventDefault() on every wheel and touchmove, which causes the
-	  game iframe to "hijack" the page scroll inside Reddit.
-
-	  By making those listeners passive, the browser ignores any
-	  preventDefault() calls and lets the parent Reddit page scroll
-	  normally, while the game still receives the events for input.
-	-->
-	<script>
-		(function () {
-			var PASSIVE_EVENTS = ['wheel', 'mousewheel', 'touchstart', 'touchmove'];
-			var origAdd = EventTarget.prototype.addEventListener;
-			EventTarget.prototype.addEventListener = function (type, listener, options) {
-				if (PASSIVE_EVENTS.indexOf(type) !== -1) {
-					if (options === undefined || options === false || options === true) {
-						options = { capture: !!options, passive: true };
-					} else if (typeof options === 'object' && options !== null) {
-						// Force passive even if caller asked for non-passive
-						options = Object.assign({}, options, { passive: true });
-					}
-				}
-				return origAdd.call(this, type, listener, options);
-			};
-
-			// Forward wheel deltas to the Reddit parent frame so the host page
-			// can scroll naturally even though the iframe consumes the event.
-			window.addEventListener('wheel', function (e) {
-				if (window.parent && window.parent !== window) {
-					try {
-						window.parent.postMessage(
-							{ type: 'devvit-scroll', deltaY: e.deltaY, deltaX: e.deltaX },
-							'*'
-						);
-					} catch (err) { /* ignore cross-origin errors */ }
-				}
-			}, { passive: true });
-		})();
-	</script>
 </head>
 
 <body>

@@ -10,10 +10,6 @@ interface TouchState {
 
 const SWIPE_THRESHOLD = 25
 const SWIPE_TIME_LIMIT = 350
-// Vertical swipes shorter than this don't count as a jump/slide gesture; that
-// way slow vertical drags pass through as page scrolls and only quick flicks
-// are interpreted as game input.
-const VERTICAL_SWIPE_MIN_VELOCITY = 0.6 // px/ms
 
 export function createInputSystem(k: KAPLAYCtx) {
   let pendingInput: GameInput = null
@@ -56,19 +52,14 @@ export function createInputSystem(k: KAPLAYCtx) {
       if (absDx > absDy) {
         pendingInput = dx > 0 ? 'right' : 'left'
       } else {
-        // Only count quick vertical flicks as jump/slide so that slow
-        // vertical drags can scroll the Reddit page through the iframe.
-        const velocity = absDy / Math.max(dt, 1)
-        if (velocity >= VERTICAL_SWIPE_MIN_VELOCITY) {
-          pendingInput = dy < 0 ? 'jump' : 'slide'
-        }
+        pendingInput = dy < 0 ? 'jump' : 'slide'
       }
     }
 
     touchState = null
   })
 
-  // Direct touch events (Kaplay forwards these)
+  // Direct touch events
   k.onTouchStart((pos) => {
     touchState = { startX: pos.x, startY: pos.y, startTime: Date.now() }
   })
@@ -92,10 +83,7 @@ export function createInputSystem(k: KAPLAYCtx) {
       if (absDx > absDy) {
         pendingInput = dx > 0 ? 'right' : 'left'
       } else {
-        const velocity = absDy / Math.max(dt, 1)
-        if (velocity >= VERTICAL_SWIPE_MIN_VELOCITY) {
-          pendingInput = dy < 0 ? 'jump' : 'slide'
-        }
+        pendingInput = dy < 0 ? 'jump' : 'slide'
       }
     }
 
