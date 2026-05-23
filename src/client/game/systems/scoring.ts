@@ -7,6 +7,7 @@ export function createScoringSystem() {
   let coinsCollected = 0
   let comboCount = 0
   let multiplier = 1
+  let lives = 3
   let highScore = loadHighScore()
 
   function loadHighScore(): number {
@@ -39,6 +40,10 @@ export function createScoringSystem() {
       return multiplier
     },
 
+    getLives(): number {
+      return lives
+    },
+
     getHighScore(): number {
       return highScore
     },
@@ -67,6 +72,12 @@ export function createScoringSystem() {
       multiplier = 1
     },
 
+    /** Returns true if player is still alive, false if dead */
+    loseLife(): boolean {
+      lives = Math.max(0, lives - 1)
+      return lives > 0
+    },
+
     finalize() {
       const finalScore = Math.floor(score)
       if (finalScore > highScore) {
@@ -81,6 +92,7 @@ export function createScoringSystem() {
       coinsCollected = 0
       comboCount = 0
       multiplier = 1
+      lives = 3
     },
   }
 }

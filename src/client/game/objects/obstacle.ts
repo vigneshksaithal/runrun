@@ -32,7 +32,15 @@ export function createObstacle(k: KAPLAYCtx, lane: number, type: ObstacleType): 
 }
 
 function createStoneWall(k: KAPLAYCtx, parent: GameObj) {
-  // Main gray block (60x55)
+  // Glow halo (red)
+  parent.add([
+    k.rect(68, 63),
+    k.color(...C.OBSTACLE_STONE_GLOW),
+    k.anchor('bot'),
+    k.pos(0, 4),
+    k.opacity(0.2),
+  ])
+  // Main block (60x55)
   parent.add([
     k.rect(60, 55),
     k.color(...C.OBSTACLE_STONE),
@@ -66,6 +74,14 @@ function createStoneWall(k: KAPLAYCtx, parent: GameObj) {
 }
 
 function createLowBeam(k: KAPLAYCtx, parent: GameObj) {
+  // Glow halo (amber)
+  parent.add([
+    k.rect(78, 22),
+    k.color(...C.OBSTACLE_BEAM_GLOW),
+    k.anchor('bot'),
+    k.pos(0, -38),
+    k.opacity(0.2),
+  ])
   // Wide bar at top (70x14)
   parent.add([
     k.rect(70, 14),
@@ -92,7 +108,15 @@ function createLowBeam(k: KAPLAYCtx, parent: GameObj) {
 }
 
 function createPillar(k: KAPLAYCtx, parent: GameObj) {
-  // Tall red block (44x55)
+  // Glow halo (magenta)
+  parent.add([
+    k.rect(52, 63),
+    k.color(...C.OBSTACLE_PILLAR_GLOW),
+    k.anchor('bot'),
+    k.pos(0, 4),
+    k.opacity(0.2),
+  ])
+  // Tall block (44x55)
   parent.add([
     k.rect(44, 55),
     k.color(...C.OBSTACLE_PILLAR),
