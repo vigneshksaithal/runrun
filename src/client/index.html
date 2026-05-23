@@ -303,11 +303,8 @@
 		</div>
 	</div>
 
-	<script type="module" src="./main.ts"></script>
 	<script>
-		// Hide splash once the game canvas mounts (Kaplay creates the canvas
-		// inside <body>). We watch for it; on detection we wait a brief moment
-		// to let the first frame paint, then fade out.
+		// Splash hide logic — multiple triggers, whichever fires first wins.
 		(function () {
 			var splash = document.getElementById('splash');
 			if (!splash) return;
@@ -316,20 +313,22 @@
 				if (done) return;
 				done = true;
 				splash.classList.add('hide');
-				setTimeout(function () { splash.remove(); }, 400);
+				setTimeout(function () {
+					if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+				}, 400);
 			}
-			var mo = new MutationObserver(function () {
-				if (document.querySelector('canvas')) {
-					mo.disconnect();
-					// Give the game one paint cycle to draw its first frame
-					setTimeout(hide, 250);
-				}
-			});
-			mo.observe(document.body, { childList: true, subtree: true });
-			// Hard fallback in case detection misses
-			setTimeout(hide, 5000);
+			// Expose for main.ts to call once the game has started
+			window.__hideSplash = hide;
+
+			// Trigger 1: explicit event from main.ts
+			window.addEventListener('runrun:ready', hide);
+
+			// Trigger 2: hard timeout — splash should never block more than 2.5s.
+			// The game canvas paints in well under that on any device.
+			setTimeout(hide, 2500);
 		})();
 	</script>
+	<script type="module" src="./main.ts"></script>
 </body>
 
 </html>

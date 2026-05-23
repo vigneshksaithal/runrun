@@ -22,3 +22,11 @@ createDeathScene(k)
 
 // Start with the start screen
 k.go('start')
+
+// Tell the splash overlay it's safe to fade out — the canvas is up and the
+// first scene has rendered its first frame.
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    window.dispatchEvent(new CustomEvent('runrun:ready'))
+  })
+})
