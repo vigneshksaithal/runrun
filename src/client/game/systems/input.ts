@@ -59,36 +59,41 @@ export function createInputSystem(k: KAPLAYCtx) {
     touchState = null
   })
 
-  // Also support direct touch events
-  k.onTouchStart((pos) => {
-    touchState = { startX: pos.x, startY: pos.y, startTime: Date.now() }
-  })
+  // Also support direct touch events via native listeners (passive: true so
+  // vertical scrolling is never blocked on the parent Reddit page).
+  // We only claim horizontal swipes and upward/downward flicks as game input.
+  window.addEventListener('touchstart', (e: TouchEvent) => {
+    if (e.touches.length !== 1) return
+    const t = e.touches[0]
+    touchState = { startX: t.clientX, startY: t.clientY, startTime: Date.now() }
+  }, { passive: true })
 
-  k.onTouchEnd((pos) => {
+  window.addEventListener('touchend', (e: TouchEvent) => {
     if (!touchState) return
+    const t = e.changedTouches[0]
+    if (!t) { touchState = null; return }
 
-    const dx = pos.x - touchState.startX
-    const dy = pos.y - touchState.startY
-    const dt = Date.now() - touchState.startTime
+    const dx = t.clientX - touchState.startX
+    const dy = t.clientY - touchState.startY
+    const elapsed = Date.now() - touchState.startTime
 
-    if (dt > SWIPE_TIME_LIMIT) {
-      touchState = null
-      return
-    }
+    touchState = null
+
+    if (elapsed > SWIPE_TIME_LIMIT) return
 
     const absDx = Math.abs(dx)
     const absDy = Math.abs(dy)
 
     if (absDx > SWIPE_THRESHOLD || absDy > SWIPE_THRESHOLD) {
       if (absDx > absDy) {
+        // Horizontal swipe → lane change
         pendingInput = dx > 0 ? 'right' : 'left'
       } else {
+        // Vertical swipe → jump / slide
         pendingInput = dy < 0 ? 'jump' : 'slide'
       }
     }
-
-    touchState = null
-  })
+  }, { passive: true })
 
   return {
     consume(): GameInput {
