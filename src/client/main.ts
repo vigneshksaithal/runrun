@@ -20,5 +20,5 @@ createStartScene(k)
 createGameScene(k)
 createDeathScene(k)
 
-// Start with the start screen
-k.go('start')
+// Start directly with the game (preview screen is now separate)
+k.go('game')
