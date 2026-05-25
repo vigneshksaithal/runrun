@@ -5,7 +5,7 @@ export const GAME_CONFIG = {
 
   // Lane configuration
   LANES: 3,
-  LANE_WIDTH: 100,
+  LANE_WIDTH: 110,  // Increased from 100 to accommodate larger objects
   LANE_Y_BOTTOM: 700,
   LANE_Y_TOP: 220,
   VANISHING_POINT_X: 300,
@@ -35,7 +35,7 @@ export const GAME_CONFIG = {
   SLIDE_DURATION: 0.55,
 
   // Road animation
-  ROAD_LINE_COUNT: 8,
+  ROAD_LINE_COUNT: 4,  // Reduced from 8 to reduce visual noise
   ROAD_LINE_SPEED_MULT: 100,
 
   // Combo system
@@ -59,8 +59,8 @@ export const GAME_CONFIG = {
     WALL_LIGHT: [40, 70, 55] as [number, number, number],
     WALL_ACCENT: [60, 180, 120] as [number, number, number],
 
-    // Lane lines - bright cyan (high contrast against dark)
-    LANE_LINE: [80, 220, 200] as [number, number, number],
+    // Lane lines - muted teal (reduced brightness for eye comfort)
+    LANE_LINE: [65, 160, 150] as [number, number, number],
 
     // Player - vibrant and eye-catching
     PLAYER_BODY: [50, 200, 220] as [number, number, number],
@@ -72,7 +72,7 @@ export const GAME_CONFIG = {
     // Coins - BRIGHT saturated gold (maximum visibility)
     COIN: [255, 200, 0] as [number, number, number],
     COIN_DARK: [200, 150, 0] as [number, number, number],
-    COIN_SHINE: [255, 255, 180] as [number, number, number],
+    COIN_SHINE: [255, 245, 200] as [number, number, number],  // Warmer, less harsh
 
     // Obstacles - three warm-glow hues by required action
     OBSTACLE_STONE: [220, 50, 60] as [number, number, number],      // RED = jump over (stone wall)
@@ -97,12 +97,12 @@ export const GAME_CONFIG = {
     CRYSTAL_GREEN: [80, 255, 160] as [number, number, number],
 
     // Particles / Effects
-    PARTICLE_DUST: [80, 200, 160] as [number, number, number],
+    PARTICLE_DUST: [60, 150, 120] as [number, number, number],  // Dimmer for less noise
     PARTICLE_GOLD: [255, 220, 80] as [number, number, number],
     PARTICLE_STONE: [100, 90, 80] as [number, number, number],
 
-    // Speed lines
-    SPEED_LINE: [150, 220, 255] as [number, number, number],
+    // Speed lines - softer
+    SPEED_LINE: [120, 180, 220] as [number, number, number],
 
     // UI - clean and bold
     TEXT_WHITE: [255, 255, 255] as [number, number, number],
@@ -124,7 +124,7 @@ export function getLaneX(lane: number): number {
 export function getDepthScale(y: number): number {
   const range = GAME_CONFIG.LANE_Y_BOTTOM - GAME_CONFIG.LANE_Y_TOP
   const progress = Math.max(0, (y - GAME_CONFIG.LANE_Y_TOP) / range)
-  return 0.15 + progress * 0.85
+  return 0.1 + progress * 1.1  // Range: 0.1 to 1.2 (more dramatic approach)
 }
 
 // Get lane X position at a given depth

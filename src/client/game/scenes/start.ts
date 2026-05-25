@@ -1,5 +1,6 @@
 import type { KAPLAYCtx } from 'kaplay'
 import { GAME_CONFIG } from '../config'
+import { parseChallengeFromUrl } from '../systems/challenge'
 
 const C = GAME_CONFIG.COLORS
 
@@ -54,6 +55,42 @@ export function createStartScene(k: KAPLAYCtx) {
       k.color(80, 220, 200),
       k.z(10),
     ])
+
+    // === CHALLENGE BANNER (if user arrived via ?challenge=N URL) ===
+    const challengeScore = parseChallengeFromUrl()
+    if (challengeScore !== null) {
+      // Glow background
+      const glow = k.add([
+        k.rect(320, 60, { radius: 10 }),
+        k.pos(GAME_CONFIG.WIDTH / 2, 110),
+        k.anchor('center'),
+        k.color(255, 80, 80),
+        k.opacity(0.25),
+        k.z(9),
+      ])
+      // Pulsing glow opacity
+      let glowT = 0
+      glow.onUpdate(() => {
+        glowT += k.dt() * 3
+        glow.opacity = 0.18 + Math.abs(Math.sin(glowT)) * 0.18
+      })
+      // "CHALLENGE" small label
+      k.add([
+        k.text('CHALLENGE', { size: 14 }),
+        k.pos(GAME_CONFIG.WIDTH / 2, 92),
+        k.anchor('center'),
+        k.color(255, 200, 200),
+        k.z(10),
+      ])
+      // The score to beat
+      k.add([
+        k.text(`Beat ${challengeScore}!`, { size: 26 }),
+        k.pos(GAME_CONFIG.WIDTH / 2, 120),
+        k.anchor('center'),
+        k.color(255, 120, 120),
+        k.z(10),
+      ])
+    }
 
     // Bouncing player preview
     const preview = k.add([
@@ -190,9 +227,10 @@ export function createStartScene(k: KAPLAYCtx) {
       })
     }
 
-    // Start game on any input
-    k.onKeyPress(() => k.go('game'))
-    k.onMousePress(() => k.go('game'))
-    k.onTouchStart(() => k.go('game'))
+    // Start game on any input — pass challenge score if present
+    const startGame = () => k.go('game', { challengeScore })
+    k.onKeyPress(startGame)
+    k.onMousePress(startGame)
+    k.onTouchStart(startGame)
   })
 }

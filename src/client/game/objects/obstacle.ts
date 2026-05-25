@@ -32,17 +32,17 @@ export function createObstacle(k: KAPLAYCtx, lane: number, type: ObstacleType): 
 }
 
 function createStoneWall(k: KAPLAYCtx, parent: GameObj) {
-  // Glow halo (red)
+  // Glow halo (red) - reduced opacity
   parent.add([
-    k.rect(68, 63),
+    k.rect(102, 95),
     k.color(...C.OBSTACLE_STONE_GLOW),
     k.anchor('bot'),
-    k.pos(0, 4),
-    k.opacity(0.2),
+    k.pos(0, 6),
+    k.opacity(0.12),
   ])
-  // Main block (60x55)
+  // Main block (90x83) - SCALED 1.5x
   parent.add([
-    k.rect(60, 55),
+    k.rect(90, 83),
     k.color(...C.OBSTACLE_STONE),
     k.anchor('bot'),
     k.pos(0, 0),
@@ -50,94 +50,94 @@ function createStoneWall(k: KAPLAYCtx, parent: GameObj) {
 
   // Horizontal brick line 1
   parent.add([
-    k.rect(56, 3),
+    k.rect(84, 5),
     k.color(...C.OBSTACLE_STONE_DARK),
     k.anchor('bot'),
-    k.pos(0, -20),
+    k.pos(0, -30),
   ])
 
   // Horizontal brick line 2
   parent.add([
-    k.rect(56, 3),
+    k.rect(84, 5),
     k.color(...C.OBSTACLE_STONE_DARK),
     k.anchor('bot'),
-    k.pos(0, -38),
+    k.pos(0, -57),
   ])
 
   // Vertical line
   parent.add([
-    k.rect(3, 50),
+    k.rect(5, 75),
     k.color(...C.OBSTACLE_STONE_DARK),
     k.anchor('bot'),
-    k.pos(10, -3),
+    k.pos(15, -5),
   ])
 }
 
 function createLowBeam(k: KAPLAYCtx, parent: GameObj) {
-  // Glow halo (amber)
+  // Glow halo (amber) - reduced opacity
   parent.add([
-    k.rect(78, 22),
+    k.rect(117, 33),
     k.color(...C.OBSTACLE_BEAM_GLOW),
     k.anchor('bot'),
-    k.pos(0, -38),
-    k.opacity(0.2),
+    k.pos(0, -57),
+    k.opacity(0.12),
   ])
-  // Wide bar at top (70x14)
+  // Wide bar at top (105x21) - SCALED 1.5x
   parent.add([
-    k.rect(70, 14),
+    k.rect(105, 21),
     k.color(...C.OBSTACLE_BEAM),
     k.anchor('bot'),
-    k.pos(0, -44),
+    k.pos(0, -66),
   ])
 
   // Hanging strand 1
   parent.add([
-    k.rect(3, 12),
+    k.rect(5, 18),
     k.color(...C.OBSTACLE_BEAM_DARK),
     k.anchor('top'),
-    k.pos(-15, -44),
+    k.pos(-23, -66),
   ])
 
   // Hanging strand 2
   parent.add([
-    k.rect(3, 10),
+    k.rect(5, 15),
     k.color(...C.OBSTACLE_BEAM_DARK),
     k.anchor('top'),
-    k.pos(12, -44),
+    k.pos(18, -66),
   ])
 }
 
 function createPillar(k: KAPLAYCtx, parent: GameObj) {
-  // Glow halo (magenta)
+  // Glow halo (magenta) - reduced opacity
   parent.add([
-    k.rect(52, 63),
+    k.rect(78, 95),
     k.color(...C.OBSTACLE_PILLAR_GLOW),
     k.anchor('bot'),
-    k.pos(0, 4),
-    k.opacity(0.2),
+    k.pos(0, 6),
+    k.opacity(0.12),
   ])
-  // Tall block (44x55)
+  // Tall block (66x83) - SCALED 1.5x
   parent.add([
-    k.rect(44, 55),
+    k.rect(66, 83),
     k.color(...C.OBSTACLE_PILLAR),
     k.anchor('bot'),
     k.pos(0, 0),
   ])
 
-  // Yellow/black warning stripe (44x10)
+  // Yellow/black warning stripe (66x15)
   parent.add([
-    k.rect(44, 10),
+    k.rect(66, 15),
     k.color(...C.OBSTACLE_STRIPE),
     k.anchor('bot'),
-    k.pos(0, -22),
+    k.pos(0, -33),
   ])
 
   // Dark stripe overlay
   parent.add([
-    k.rect(10, 10),
+    k.rect(15, 15),
     k.color(...C.OBSTACLE_STRIPE_DARK),
     k.anchor('bot'),
-    k.pos(-12, -22),
+    k.pos(-18, -33),
   ])
 }
 

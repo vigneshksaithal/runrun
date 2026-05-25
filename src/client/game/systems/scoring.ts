@@ -10,6 +10,7 @@ export function createScoringSystem() {
   let multiplier = 1
   let lives = 3
   let highScore = loadHighScore()
+  let clutchCount = 0
 
   function loadHighScore(): number {
     try {
@@ -59,6 +60,15 @@ export function createScoringSystem() {
       return highScore
     },
 
+    getClutchCount(): number {
+      return clutchCount
+    },
+
+    addClutchBonus(points: number) {
+      score += points
+      clutchCount++
+    },
+
     isNewHighScore(): boolean {
       return Math.floor(score) > highScore
     },
@@ -106,6 +116,7 @@ export function createScoringSystem() {
       comboCount = 0
       multiplier = 1
       lives = 3
+      clutchCount = 0
     },
   }
 }

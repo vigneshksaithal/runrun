@@ -18,28 +18,28 @@ export function createCoin(k: KAPLAYCtx, lane: number): GameObj {
     { lane, baseY: startY, bobTime: 0 },
   ])
 
-  // Main gold body (ingot shape)
+  // Main gold body (ingot shape) - SCALED 1.6x
   coin.add([
-    k.rect(22, 16),
+    k.rect(35, 26),
     k.color(...C.COIN),
     k.anchor('center'),
     k.pos(0, 0),
   ])
 
-  // Darker gold bottom (depth)
+  // Darker gold bottom (depth) - SCALED
   coin.add([
-    k.rect(22, 6),
+    k.rect(35, 10),
     k.color(...C.COIN_DARK),
     k.anchor('center'),
-    k.pos(0, 5),
+    k.pos(0, 8),
   ])
 
-  // White shine square
+  // White shine square - SCALED
   coin.add([
-    k.rect(4, 4),
+    k.rect(6, 6),
     k.color(...C.COIN_SHINE),
     k.anchor('center'),
-    k.pos(-6, -4),
+    k.pos(-10, -6),
   ])
 
   return coin

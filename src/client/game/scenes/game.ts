@@ -11,13 +11,27 @@ import { createSpawnerSystem } from '../systems/spawner'
 
 const C = GAME_CONFIG.COLORS
 
+export interface GameSceneParams {
+  challengeScore?: number | null
+}
+
 export function createGameScene(k: KAPLAYCtx) {
-  k.scene('game', () => {
+  k.scene('game', (params?: GameSceneParams) => {
+    const challengeScore = params?.challengeScore ?? null
     let gameSpeed = GAME_CONFIG.INITIAL_SPEED
     let isJumping = false
     let isSliding = false
     let isDead = false
     let ghostTimer = 0
+
+    // Clutch (near-miss) tracking
+    let lastActionTime = -10000
+    let lastActionType: 'jump' | 'slide' | null = null
+    let lastClutchTime = -10000
+    const CLUTCH_ZONE_MIN = 35
+    const CLUTCH_ZONE_MAX = 60
+    const CLUTCH_TIMING_WINDOW_MS = 220
+    const CLUTCH_COOLDOWN_MS = 4000
 
     // Systems
     const input = createInputSystem(k)
@@ -173,7 +187,7 @@ export function createGameScene(k: KAPLAYCtx) {
         k.pos(centerX, y),
         k.anchor('center'),
         k.color(...C.LANE_LINE),
-        k.opacity(0.3 + progress * 0.3),
+        k.opacity(0.2 + progress * 0.25),
         k.z(3),
         { baseProgress: progress },
       ])
@@ -260,6 +274,19 @@ export function createGameScene(k: KAPLAYCtx) {
 
     let comboText: GameObj | null = null
 
+    // === CHALLENGE TARGET BADGE ===
+    let targetBadge: GameObj | null = null
+    let beatChallengeAlready = false
+    if (challengeScore !== null) {
+      targetBadge = k.add([
+        k.text(`TARGET: ${challengeScore}`, { size: 14 }),
+        k.pos(GAME_CONFIG.WIDTH / 2, 60),
+        k.anchor('center'),
+        k.color(255, 140, 140),
+        k.z(200),
+      ])
+    }
+
     // === SPEED LINES (only above speed 8) ===
     const speedLines: GameObj[] = []
 
@@ -278,10 +305,14 @@ export function createGameScene(k: KAPLAYCtx) {
       else if (action === 'right') lanes.moveRight()
       else if (action === 'jump' && !isJumping) {
         isJumping = true
+        lastActionTime = performance.now()
+        lastActionType = 'jump'
         jumpPlayer(k, player)
         k.wait(GAME_CONFIG.JUMP_DURATION, () => { isJumping = false })
       } else if (action === 'slide' && !isSliding) {
         isSliding = true
+        lastActionTime = performance.now()
+        lastActionType = 'slide'
         slidePlayer(k, player)
         k.wait(GAME_CONFIG.SLIDE_DURATION, () => { isSliding = false })
       }
@@ -321,6 +352,47 @@ export function createGameScene(k: KAPLAYCtx) {
       scoreText.text = String(scoring.getScore())
       coinText.text = String(scoring.getCoins())
 
+      // Challenge: trigger celebration when player crosses target score
+      if (
+        challengeScore !== null &&
+        !beatChallengeAlready &&
+        scoring.getScore() >= challengeScore
+      ) {
+        beatChallengeAlready = true
+        // Big "BEAT IT!" pop
+        const banner = k.add([
+          k.text('BEAT IT!', { size: 36 }),
+          k.pos(GAME_CONFIG.WIDTH / 2, 200),
+          k.anchor('center'),
+          k.color(80, 255, 180),
+          k.scale(0.5),
+          k.opacity(0),
+          k.z(220),
+        ])
+        k.tween(0.5, 1.4, 0.25, (v: number) => { if (banner.exists()) banner.scaleTo(v) }, k.easings.easeOutBack)
+        k.tween(0, 1, 0.2, (v: number) => { if (banner.exists()) banner.opacity = v })
+        k.wait(1.0, () => {
+          k.tween(1, 0, 0.4, (v: number) => { if (banner.exists()) banner.opacity = v })
+          k.wait(0.4, () => { if (banner.exists()) banner.destroy() })
+        })
+        // Fade target badge to muted green
+        if (targetBadge && targetBadge.exists()) {
+          targetBadge.color = k.rgb(80, 200, 140)
+          targetBadge.text = `BEATEN: ${challengeScore}`
+        }
+        // Small celebratory shake + flash
+        k.shake(6)
+        const flash = k.add([
+          k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
+          k.pos(0, 0),
+          k.color(80, 255, 180),
+          k.opacity(0.18),
+          k.z(210),
+        ])
+        k.tween(0.18, 0, 0.3, (v: number) => { if (flash.exists()) flash.opacity = v })
+        k.wait(0.35, () => { if (flash.exists()) flash.destroy() })
+      }
+
       // Combo display
       const mult = scoring.getMultiplier()
       if (mult > 1) {
@@ -353,7 +425,7 @@ export function createGameScene(k: KAPLAYCtx) {
         const scale = getDepthScale(y)
         line.pos.y = y
         line.width = 300 * scale
-        line.opacity = 0.2 + progress * 0.4
+        line.opacity = 0.15 + progress * 0.3
       }
 
       // Speed lines (only above speed 8)
@@ -415,6 +487,30 @@ export function createGameScene(k: KAPLAYCtx) {
         if (obs.lane !== lanes.getCurrentLane()) continue
 
         const dy = Math.abs(obs.baseY - GAME_CONFIG.PLAYER_Y)
+
+        // === CLUTCH (near-miss) DETECTION ===
+        // Player is in same lane, in the danger zone (35–60px), and either
+        // (a) jumped/slid recently (within timing window), or
+        // (b) just lane-switched into safety while in the danger zone.
+        if (dy >= CLUTCH_ZONE_MIN && dy <= CLUTCH_ZONE_MAX) {
+          const now = performance.now()
+          const cooldownPassed = (now - lastClutchTime) > CLUTCH_COOLDOWN_MS
+          const timeSinceAction = now - lastActionTime
+          const type = obs.obstacleType as string
+          const correctTimedAction =
+            (type === 'stone_wall' && lastActionType === 'jump' && isJumping) ||
+            (type === 'low_beam' && lastActionType === 'slide' && isSliding)
+          if (
+            cooldownPassed &&
+            correctTimedAction &&
+            timeSinceAction < CLUTCH_TIMING_WINDOW_MS
+          ) {
+            lastClutchTime = now
+            scoring.addClutchBonus(50)
+            triggerClutchEffect(player.pos.x, player.pos.y)
+          }
+        }
+
         if (dy > 40) continue
 
         // Check obstacle type vs player action
@@ -428,6 +524,52 @@ export function createGameScene(k: KAPLAYCtx) {
         break
       }
     })
+
+    // === CLUTCH (near-miss) VISUAL EFFECT ===
+    function triggerClutchEffect(x: number, y: number) {
+      // Floating CLUTCH! text
+      const txt = k.add([
+        k.text('CLUTCH!', { size: 22 }),
+        k.pos(x, y - 70),
+        k.anchor('center'),
+        k.color(255, 200, 60),
+        k.opacity(1),
+        k.scale(1.4),
+        k.z(210),
+      ])
+      const startY = txt.pos.y
+      k.tween(startY, startY - 50, 0.55, (v: number) => { if (txt.exists()) txt.pos.y = v }, k.easings.easeOutQuad)
+      k.tween(1.4, 1.0, 0.18, (v: number) => { if (txt.exists()) txt.scaleTo(v) }, k.easings.easeOutQuad)
+      k.tween(1, 0, 0.55, (v: number) => { if (txt.exists()) txt.opacity = v }, k.easings.easeInQuad)
+      k.wait(0.6, () => { if (txt.exists()) txt.destroy() })
+
+      // +50 score popup
+      const bonus = k.add([
+        k.text('+50', { size: 16 }),
+        k.pos(x + 50, y - 50),
+        k.anchor('center'),
+        k.color(...C.TEXT_GOLD),
+        k.opacity(1),
+        k.z(210),
+      ])
+      k.tween(bonus.pos.y, bonus.pos.y - 30, 0.5, (v: number) => { if (bonus.exists()) bonus.pos.y = v }, k.easings.easeOutQuad)
+      k.tween(1, 0, 0.5, (v: number) => { if (bonus.exists()) bonus.opacity = v }, k.easings.easeInQuad)
+      k.wait(0.55, () => { if (bonus.exists()) bonus.destroy() })
+
+      // Brief gold edge flash
+      const flash = k.add([
+        k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
+        k.pos(0, 0),
+        k.color(255, 200, 60),
+        k.opacity(0.18),
+        k.z(205),
+      ])
+      k.tween(0.18, 0, 0.2, (v: number) => { if (flash.exists()) flash.opacity = v }, k.easings.easeOutQuad)
+      k.wait(0.22, () => { if (flash.exists()) flash.destroy() })
+
+      // Tiny shake for satisfying impact
+      k.shake(2.5)
+    }
 
     // === HIT HANDLER (loses a life, or dies) ===
     function handleHit(obs: GameObj) {
@@ -492,6 +634,9 @@ export function createGameScene(k: KAPLAYCtx) {
           isNewHigh: scoring.isNewHighScore(),
           playerX: px,
           playerY: py,
+          clutchCount: scoring.getClutchCount(),
+          challengeScore: challengeScore,
+          challengeBeaten: beatChallengeAlready,
         }
 
         k.go('death', payload)

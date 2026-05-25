@@ -174,25 +174,31 @@ export function createDeathParticles(k: KAPLAYCtx, x: number, y: number) {
     C.PLAYER_LEGS,
     C.PLAYER_BODY,
     C.PLAYER_HEAD,
+    C.PLAYER_HAIR,
+    C.PLAYER_LEGS,
   ]
 
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2
-    const speed = k.rand(150, 350)
+  // 16 chunks (was 12), staggered for dramatic effect
+  for (let i = 0; i < 16; i++) {
+    const angle = (i / 16) * Math.PI * 2 + k.rand(-0.2, 0.2)
+    const speed = k.rand(180, 400)
     const color = colors[i % colors.length]
-    const size = k.rand(6, 14)
+    const size = k.rand(8, 18)
 
-    const p = k.add([
-      k.rect(size, size),
-      k.pos(x, y - 30),
-      k.anchor('center'),
-      k.color(...color),
-      k.opacity(1),
-      k.scale(1),
-      k.lifespan(0.4, { fade: 0.3 }),
-      k.move(k.Vec2.fromAngle(k.rad2deg(angle)), speed),
-      k.z(200),
-    ])
-    void p
+    // Stagger spawns over ~190ms for "explosion ripple" feel
+    k.wait(i * 0.012, () => {
+      const p = k.add([
+        k.rect(size, size),
+        k.pos(x, y - 30),
+        k.anchor('center'),
+        k.color(...color),
+        k.opacity(1),
+        k.scale(1),
+        k.lifespan(0.4, { fade: 0.3 }),
+        k.move(k.Vec2.fromAngle(k.rad2deg(angle)), speed),
+        k.z(200),
+      ])
+      void p
+    })
   }
 }
