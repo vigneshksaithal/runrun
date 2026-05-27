@@ -124,20 +124,61 @@ export function createDeathScene(k: KAPLAYCtx) {
           ])
           k.tween(1.8, 1, 0.2, (v: number) => { if (badge.exists()) badge.scaleTo(v) }, k.easings.easeOutQuad)
           k.tween(0, 1, 0.15, (v: number) => { if (badge.exists()) badge.opacity = v })
+
+          // Confetti rain (gated on isNewHigh) — 8 colorful rects falling with
+          // horizontal drift, fired 0.3s after the badge so it lands as a
+          // celebration cue rather than competing with the badge entrance.
+          k.wait(0.3, () => {
+            const palette = C.CONFETTI
+            for (let i = 0; i < 8; i++) {
+              const color = palette[i % palette.length]!
+              const startX = k.rand(60, GAME_CONFIG.WIDTH - 60)
+              const drift = k.rand(-40, 40)
+              const fallSpeed = k.rand(80, 160)
+              const w = k.rand(6, 10)
+              const h = k.rand(8, 12)
+              const piece = k.add([
+                k.rect(w, h),
+                k.pos(startX, 200),
+                k.anchor('center'),
+                k.color(color[0], color[1], color[2]),
+                k.opacity(1),
+                k.rotate(k.rand(0, 360)),
+                k.lifespan(2.5, { fade: 1.0 }),
+                k.z(271),
+                { spin: k.rand(-180, 180), driftAmt: drift, fall: fallSpeed, t: 0 },
+              ])
+              piece.onUpdate(() => {
+                if (!piece.exists()) return
+                const dt = k.dt()
+                piece.t += dt
+                piece.pos.y += piece.fall * dt
+                piece.pos.x += piece.driftAmt * dt
+                piece.angle += piece.spin * dt
+              })
+            }
+          })
         })
       }
 
-      // Coins display
+      // Coins display (round coin icon to match in-game)
       k.add([
-        k.rect(14, 12),
+        k.circle(8),
         k.pos(GAME_CONFIG.WIDTH / 2 - 50, 420),
         k.anchor('center'),
         k.color(...C.COIN),
         k.z(270),
       ])
       k.add([
+        k.circle(3),
+        k.pos(GAME_CONFIG.WIDTH / 2 - 50, 420),
+        k.anchor('center'),
+        k.color(...C.COIN_STAR),
+        k.z(271),
+      ])
+      k.add([
         k.text(`${coins}`, { size: 22 }),
-        k.pos(GAME_CONFIG.WIDTH / 2 - 25, 420),
+        k.pos(GAME_CONFIG.WIDTH / 2 - 35, 420),
         k.anchor('left'),
         k.color(...C.TEXT_GOLD),
         k.z(270),

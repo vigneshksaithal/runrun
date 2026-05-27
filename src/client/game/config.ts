@@ -110,6 +110,30 @@ export const GAME_CONFIG = {
     COMBO_TEXT: [80, 255, 180] as [number, number, number],
     BUTTON_GREEN: [50, 200, 100] as [number, number, number],
     BUTTON_GREEN_DARK: [35, 150, 70] as [number, number, number],
+
+    // === Polish tokens (added) ===
+    // HUD chip backgrounds
+    CHIP_BG: [0, 0, 0] as [number, number, number],
+    // Player drop shadow / silhouettes
+    SHADOW: [0, 0, 0] as [number, number, number],
+    // Outline color (player + heart points)
+    OUTLINE: [10, 12, 18] as [number, number, number],
+    // Distant horizon silhouette band
+    SILHOUETTE: [10, 18, 12] as [number, number, number],
+    // Heart (lives)
+    HEART: [220, 50, 60] as [number, number, number],
+    // Coin star + ring effect
+    COIN_STAR: [255, 255, 180] as [number, number, number],
+    COIN_RING: [255, 220, 80] as [number, number, number],
+    // Confetti palette (NEW BEST)
+    CONFETTI: [
+      [255, 220, 80],
+      [100, 180, 255],
+      [160, 100, 255],
+      [80, 255, 160],
+      [80, 255, 180],
+      [255, 120, 40],
+    ] as [number, number, number][],
   }
 }
 

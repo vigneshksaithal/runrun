@@ -17,7 +17,7 @@ export function createObstacle(k: KAPLAYCtx, lane: number, type: ObstacleType): 
     k.opacity(1),
     k.z(80),
     'obstacle',
-    { lane, baseY: startY, obstacleType: type },
+    { lane, baseY: startY, obstacleType: type, halo: null as GameObj | null },
   ])
 
   if (type === 'stone_wall') {
@@ -31,15 +31,58 @@ export function createObstacle(k: KAPLAYCtx, lane: number, type: ObstacleType): 
   return obstacle
 }
 
+// Chevron pointing up: a 3-vertex triangle pointing upward.
+// Returned points are centered on (0,0) with the given size.
+function chevronUpPts(k: KAPLAYCtx, size: number) {
+  const h = size
+  return [
+    k.vec2(0, -h * 0.55),       // top
+    k.vec2(h * 0.6, h * 0.45),   // bottom-right
+    k.vec2(-h * 0.6, h * 0.45),  // bottom-left
+  ]
+}
+
+function chevronDownPts(k: KAPLAYCtx, size: number) {
+  const h = size
+  return [
+    k.vec2(-h * 0.6, -h * 0.45),
+    k.vec2(h * 0.6, -h * 0.45),
+    k.vec2(0, h * 0.55),
+  ]
+}
+
+// Dual horizontal arrow: 8-vertex polygon spanning width with notches at both ends.
+function dualArrowPts(k: KAPLAYCtx, w: number, h: number) {
+  const tip = w / 2
+  const shaftX = w / 2 - h * 0.5
+  const tH = h * 0.45      // tip half-height
+  const sH = h * 0.18      // shaft half-height
+  return [
+    k.vec2(-tip, 0),         // left tip
+    k.vec2(-shaftX, -tH),    // left top of arrowhead
+    k.vec2(-shaftX, -sH),    // left top of shaft
+    k.vec2(shaftX, -sH),     // right top of shaft
+    k.vec2(shaftX, -tH),     // right top of arrowhead
+    k.vec2(tip, 0),          // right tip
+    k.vec2(shaftX, tH),      // right bottom of arrowhead
+    k.vec2(shaftX, sH),      // right bottom of shaft
+    k.vec2(-shaftX, sH),     // left bottom of shaft
+    k.vec2(-shaftX, tH),     // left bottom of arrowhead
+  ]
+}
+
 function createStoneWall(k: KAPLAYCtx, parent: GameObj) {
-  // Glow halo (red)
-  parent.add([
+  // Glow halo (red) - tagged so game scene can pulse the active-lane one
+  const halo = parent.add([
     k.rect(68, 63),
     k.color(...C.OBSTACLE_STONE_GLOW),
     k.anchor('bot'),
     k.pos(0, 4),
     k.opacity(0.2),
+    'obstacleHalo',
   ])
+  parent.halo = halo
+
   // Main block (60x55)
   parent.add([
     k.rect(60, 55),
@@ -71,17 +114,29 @@ function createStoneWall(k: KAPLAYCtx, parent: GameObj) {
     k.anchor('bot'),
     k.pos(10, -3),
   ])
+
+  // Verb icon: chevron pointing UP = "JUMP". Sits above the block.
+  parent.add([
+    k.polygon(chevronUpPts(k, 18)),
+    k.color(255, 255, 255),
+    k.opacity(0.92),
+    k.anchor('bot'),
+    k.pos(0, -64),
+  ])
 }
 
 function createLowBeam(k: KAPLAYCtx, parent: GameObj) {
   // Glow halo (amber)
-  parent.add([
+  const halo = parent.add([
     k.rect(78, 22),
     k.color(...C.OBSTACLE_BEAM_GLOW),
     k.anchor('bot'),
     k.pos(0, -38),
     k.opacity(0.2),
+    'obstacleHalo',
   ])
+  parent.halo = halo
+
   // Wide bar at top (70x14)
   parent.add([
     k.rect(70, 14),
@@ -105,17 +160,30 @@ function createLowBeam(k: KAPLAYCtx, parent: GameObj) {
     k.anchor('top'),
     k.pos(12, -44),
   ])
+
+  // Verb icon: chevron pointing DOWN = "SLIDE". Sits ABOVE the beam so it's
+  // not occluded by player or other obstacles in front.
+  parent.add([
+    k.polygon(chevronDownPts(k, 18)),
+    k.color(255, 255, 255),
+    k.opacity(0.92),
+    k.anchor('bot'),
+    k.pos(0, -68),
+  ])
 }
 
 function createPillar(k: KAPLAYCtx, parent: GameObj) {
   // Glow halo (magenta)
-  parent.add([
+  const halo = parent.add([
     k.rect(52, 63),
     k.color(...C.OBSTACLE_PILLAR_GLOW),
     k.anchor('bot'),
     k.pos(0, 4),
     k.opacity(0.2),
+    'obstacleHalo',
   ])
+  parent.halo = halo
+
   // Tall block (44x55)
   parent.add([
     k.rect(44, 55),
@@ -139,9 +207,18 @@ function createPillar(k: KAPLAYCtx, parent: GameObj) {
     k.anchor('bot'),
     k.pos(-12, -22),
   ])
+
+  // Verb icon: dual horizontal arrow = "DODGE SIDEWAYS"
+  parent.add([
+    k.polygon(dualArrowPts(k, 22, 12)),
+    k.color(255, 255, 255),
+    k.opacity(0.92),
+    k.anchor('center'),
+    k.pos(0, -64),
+  ])
 }
 
-export function updateObstacle(k: KAPLAYCtx, obstacle: GameObj, speed: number, dt: number): boolean {
+export function updateObstacle(_k: KAPLAYCtx, obstacle: GameObj, speed: number, dt: number): boolean {
   if (!obstacle.exists()) return false
 
   // Move toward player using ROAD_LINE_SPEED_MULT (100)
