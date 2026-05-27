@@ -49,7 +49,7 @@ export function createSpawnerSystem(k: KAPLAYCtx) {
   }
 
   return {
-    update(dt: number, speed: number) {
+    update(dt: number, _speed: number) {
       gameTime += dt
 
       // Update spawn interval based on time (gets tighter)

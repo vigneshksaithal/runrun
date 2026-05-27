@@ -29,6 +29,7 @@ export const GAME_CONFIG = {
   // Scoring
   SCORE_PER_SECOND: 8,
   COIN_SCORE: 5,
+  NEAR_MISS_SCORE: 10,
 
   // Jump / Slide
   JUMP_DURATION: 0.5,
@@ -41,6 +42,14 @@ export const GAME_CONFIG = {
   // Combo system
   COMBO_THRESHOLD: 5,
   MAX_MULTIPLIER: 5,
+
+  // Near-miss system
+  NEAR_MISS_COOLDOWN: 0.5,
+
+  // Milestone thresholds
+  MILESTONE_SMALL: 500,
+  MILESTONE_MED: 1000,
+  MILESTONE_LARGE: 2500,
 
   // Colors - Lush Crystal Cavern: vibrant underground world
   COLORS: {
@@ -68,11 +77,15 @@ export const GAME_CONFIG = {
     PLAYER_HAIR: [255, 120, 40] as [number, number, number],
     PLAYER_LEGS: [40, 100, 180] as [number, number, number],
     PLAYER_EYES: [20, 20, 20] as [number, number, number],
+    PLAYER_SHOES: [220, 60, 60] as [number, number, number],
+    PLAYER_BELT: [40, 40, 40] as [number, number, number],
+    PLAYER_EYE_WHITE: [255, 255, 255] as [number, number, number],
 
     // Coins - BRIGHT saturated gold (maximum visibility)
     COIN: [255, 200, 0] as [number, number, number],
     COIN_DARK: [200, 150, 0] as [number, number, number],
     COIN_SHINE: [255, 255, 180] as [number, number, number],
+    COIN_GLOW: [255, 200, 50] as [number, number, number],
 
     // Obstacles - three warm-glow hues by required action
     OBSTACLE_STONE: [220, 50, 60] as [number, number, number],      // RED = jump over (stone wall)
@@ -103,6 +116,25 @@ export const GAME_CONFIG = {
 
     // Speed lines
     SPEED_LINE: [150, 220, 255] as [number, number, number],
+    SPEED_LINE_FAST: [120, 255, 200] as [number, number, number],
+
+    // Near-miss
+    NEAR_MISS_TEXT: [255, 230, 50] as [number, number, number],
+
+    // Vignette
+    VIGNETTE_DARK: [5, 10, 8] as [number, number, number],
+
+    // Milestone / Confetti
+    MILESTONE_TEXT: [255, 255, 100] as [number, number, number],
+    CONFETTI_RED: [255, 80, 80] as [number, number, number],
+    CONFETTI_YELLOW: [255, 220, 50] as [number, number, number],
+    CONFETTI_GREEN: [80, 255, 150] as [number, number, number],
+    CONFETTI_BLUE: [80, 180, 255] as [number, number, number],
+    CONFETTI_PURPLE: [180, 100, 255] as [number, number, number],
+
+    // Combo badge
+    COMBO_BADGE_BG: [30, 60, 50] as [number, number, number],
+    COMBO_BADGE_BORDER: [80, 255, 180] as [number, number, number],
 
     // UI - clean and bold
     TEXT_WHITE: [255, 255, 255] as [number, number, number],
