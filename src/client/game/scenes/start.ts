@@ -26,25 +26,31 @@ export function createStartScene(k: KAPLAYCtx) {
     ])
 
     // Title glow shadow (green-tinted)
-    k.add([
+    const titleShadow = k.add([
       k.text('RUNRUN', { size: 48 }),
       k.pos(GAME_CONFIG.WIDTH / 2 + 2, 182),
       k.anchor('center'),
       k.color(...C.CRYSTAL_GREEN),
       k.opacity(0.4),
-      k.scale(1),
+      k.scale(1.4),
       k.z(9),
     ])
 
     // Title
-    k.add([
+    const title = k.add([
       k.text('RUNRUN', { size: 48 }),
       k.pos(GAME_CONFIG.WIDTH / 2, 180),
       k.anchor('center'),
       k.color(...C.TEXT_WHITE),
-      k.scale(1),
+      k.scale(1.4),
       k.z(10),
     ])
+
+    // Title scale-in bounce on entry: 1.4 → 1.0 with bounce ease
+    k.tween(1.4, 1.0, 0.45, (v: number) => {
+      if (title.exists()) title.scaleTo(v)
+      if (titleShadow.exists()) titleShadow.scaleTo(v)
+    }, k.easings.easeOutBack)
 
     // Subtitle - bright teal
     k.add([
@@ -122,6 +128,30 @@ export function createStartScene(k: KAPLAYCtx) {
       k.pos(0, -4),
     ])
 
+    // Button shine sweep — a translucent diagonal-feeling vertical bar that
+    // tweens left→right across the button face, scheduled on a loop.
+    const shine = btn.add([
+      k.rect(20, 54),
+      k.color(255, 255, 255),
+      k.opacity(0.0),
+      k.anchor('center'),
+      k.pos(-100, 0),
+      k.rotate(15),
+    ])
+    function runShineSweep() {
+      if (!shine.exists()) return
+      shine.pos.x = -100
+      shine.opacity = 0.32
+      k.tween(-100, 100, 0.55, (v: number) => {
+        if (shine.exists()) shine.pos.x = v
+      }, k.easings.easeInOutQuad)
+      k.tween(0.32, 0, 0.55, (v: number) => {
+        if (shine.exists()) shine.opacity = v
+      })
+      k.wait(2.5, runShineSweep)
+    }
+    k.wait(0.8, runShineSweep)
+
     // Button pulse
     let pulseTime = 0
     btn.onUpdate(() => {
@@ -166,11 +196,12 @@ export function createStartScene(k: KAPLAYCtx) {
       C.CRYSTAL_GREEN,
     ]
     for (let i = 0; i < 6; i++) {
+      const pc = particleColors[i]!
       const p = k.add([
         k.rect(k.rand(3, 5), k.rand(3, 5)),
         k.pos(k.rand(50, 550), k.rand(100, 750)),
         k.anchor('center'),
-        k.color(...particleColors[i]),
+        k.color(pc[0], pc[1], pc[2]),
         k.opacity(k.rand(0.15, 0.35)),
         k.z(5),
       ])

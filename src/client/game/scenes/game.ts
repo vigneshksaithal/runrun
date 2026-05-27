@@ -11,6 +11,55 @@ import { createSpawnerSystem } from '../systems/spawner'
 
 const C = GAME_CONFIG.COLORS
 
+// Heart icon: 2 small circles forming the lobes + a downward triangle for the
+// point. Built as 3 separate children of a parent so we can dim the whole heart
+// when a life is lost (parent.opacity controls all children).
+function makeHeart(k: KAPLAYCtx, x: number, y: number): GameObj {
+  const parent = k.add([
+    k.pos(x, y),
+    k.anchor('center'),
+    k.opacity(1),
+    k.z(200),
+  ])
+  // Left lobe
+  parent.add([
+    k.circle(5),
+    k.color(...C.HEART),
+    k.anchor('center'),
+    k.pos(-3.5, -2),
+  ])
+  // Right lobe
+  parent.add([
+    k.circle(5),
+    k.color(...C.HEART),
+    k.anchor('center'),
+    k.pos(3.5, -2),
+  ])
+  // Bottom point (downward triangle)
+  parent.add([
+    k.polygon([
+      k.vec2(-7, 0),
+      k.vec2(7, 0),
+      k.vec2(0, 8),
+    ]),
+    k.color(...C.HEART),
+    k.anchor('center'),
+    k.pos(0, 0),
+  ])
+  return parent
+}
+
+// Star icon used as the multiplier badge marker.
+function starPts(k: KAPLAYCtx, outerR: number, innerR: number) {
+  const pts = []
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 === 0 ? outerR : innerR
+    const a = -Math.PI / 2 + (i * Math.PI) / 5
+    pts.push(k.vec2(Math.cos(a) * r, Math.sin(a) * r))
+  }
+  return pts
+}
+
 export function createGameScene(k: KAPLAYCtx) {
   k.scene('game', () => {
     let gameSpeed = GAME_CONFIG.INITIAL_SPEED
@@ -149,15 +198,48 @@ export function createGameScene(k: KAPLAYCtx) {
       k.z(3),
     ])
 
-    // Distant sky peek at vanishing point area
+    // === Distant horizon silhouette band (1 polygon, gives the cavern a "horizon")
     k.add([
-      k.rect(40, 20),
-      k.pos(GAME_CONFIG.VANISHING_POINT_X, GAME_CONFIG.LANE_Y_TOP - 30),
-      k.anchor('center'),
-      k.color(80, 220, 200),
-      k.opacity(0.3),
+      k.polygon([
+        k.vec2(80, 0),
+        k.vec2(GAME_CONFIG.WIDTH - 80, 0),
+        k.vec2(GAME_CONFIG.WIDTH - 130, 14),
+        k.vec2(GAME_CONFIG.WIDTH / 2 + 50, 6),
+        k.vec2(GAME_CONFIG.WIDTH / 2 + 20, 18),
+        k.vec2(GAME_CONFIG.WIDTH / 2 - 20, 8),
+        k.vec2(GAME_CONFIG.WIDTH / 2 - 50, 20),
+        k.vec2(130, 10),
+      ]),
+      k.pos(0, GAME_CONFIG.LANE_Y_TOP - 8),
+      k.color(...C.SILHOUETTE),
+      k.opacity(0.7),
       k.z(2),
     ])
+
+    // === Sun glow at the vanishing point (replaces old "distant sky peek" rect)
+    const sun = k.add([
+      k.circle(28),
+      k.pos(GAME_CONFIG.VANISHING_POINT_X, GAME_CONFIG.LANE_Y_TOP - 10),
+      k.anchor('center'),
+      k.color(...C.TORCH_GLOW),
+      k.opacity(0.35),
+      k.z(2),
+    ])
+    // Inner brighter core
+    k.add([
+      k.circle(16),
+      k.pos(GAME_CONFIG.VANISHING_POINT_X, GAME_CONFIG.LANE_Y_TOP - 10),
+      k.anchor('center'),
+      k.color(255, 235, 160),
+      k.opacity(0.55),
+      k.z(2),
+    ])
+    // Subtle sun pulse so the horizon feels alive
+    let sunT = 0
+    sun.onUpdate(() => {
+      sunT += k.dt() * 1.4
+      sun.opacity = 0.32 + Math.sin(sunT) * 0.06
+    })
 
     // === ROAD LINES ===
     const roadLines: GameObj[] = []
@@ -173,7 +255,8 @@ export function createGameScene(k: KAPLAYCtx) {
         k.pos(centerX, y),
         k.anchor('center'),
         k.color(...C.LANE_LINE),
-        k.opacity(0.3 + progress * 0.3),
+        // Slightly dimmer than before so coins/obstacles dominate
+        k.opacity(0.15 + progress * 0.25),
         k.z(3),
         { baseProgress: progress },
       ])
@@ -212,53 +295,144 @@ export function createGameScene(k: KAPLAYCtx) {
     const player = createPlayer(k)
 
     // === HUD ===
+
+    // Score chip (centered top, behind score text)
+    k.add([
+      k.rect(140, 38, { radius: 10 }),
+      k.pos(GAME_CONFIG.WIDTH / 2, 28),
+      k.anchor('center'),
+      k.color(...C.CHIP_BG),
+      k.opacity(0.42),
+      k.outline(2, k.rgb(255, 255, 255), 0.18),
+      k.z(199),
+    ])
     const scoreText = k.add([
-      k.text('0', { size: 28 }),
-      k.pos(GAME_CONFIG.WIDTH / 2, 30),
+      k.text('0', { size: 26 }),
+      k.pos(GAME_CONFIG.WIDTH / 2, 28),
       k.anchor('center'),
       k.color(...C.TEXT_WHITE),
       k.z(200),
     ])
 
+    // Coin chip (top-left, behind icon + count)
+    k.add([
+      k.rect(96, 32, { radius: 8 }),
+      k.pos(58, 28),
+      k.anchor('center'),
+      k.color(...C.CHIP_BG),
+      k.opacity(0.42),
+      k.outline(2, k.rgb(255, 255, 255), 0.18),
+      k.z(199),
+    ])
+    // Round coin icon next to text (consistent with new round coins)
+    k.add([
+      k.circle(8),
+      k.pos(26, 28),
+      k.anchor('center'),
+      k.color(...C.COIN),
+      k.z(200),
+    ])
+    k.add([
+      k.circle(3),
+      k.pos(26, 28),
+      k.anchor('center'),
+      k.color(...C.COIN_STAR),
+      k.z(201),
+    ])
     const coinText = k.add([
-      k.text('0', { size: 20 }),
-      k.pos(30, 30),
+      k.text('0', { size: 18 }),
+      k.pos(44, 28),
       k.anchor('left'),
       k.color(...C.TEXT_GOLD),
       k.z(200),
     ])
 
-    // Coin icon next to text
-    k.add([
-      k.rect(12, 10),
-      k.pos(16, 30),
-      k.anchor('center'),
-      k.color(...C.COIN),
-      k.z(200),
-    ])
-
-    // Heart icons (3 lives) - top right
+    // Heart icons (3 lives) - top right, real heart polygon shape
     const hearts: GameObj[] = []
     for (let i = 0; i < 3; i++) {
-      const heart = k.add([
-        k.rect(14, 14),
-        k.pos(GAME_CONFIG.WIDTH - 24 - i * 22, 30),
-        k.anchor('center'),
-        k.color(220, 50, 60),
-        k.opacity(1),
-        k.z(200),
-      ])
-      // Small notch to make it look heart-like
-      heart.add([
-        k.rect(6, 6),
-        k.pos(0, 4),
-        k.anchor('center'),
-        k.color(220, 50, 60),
-      ])
+      const heart = makeHeart(k, GAME_CONFIG.WIDTH - 24 - i * 24, 28)
       hearts.push(heart)
     }
 
+    // Combo badge state — built lazily when multiplier > 1
+    let comboBadge: GameObj | null = null
     let comboText: GameObj | null = null
+    let comboStar: GameObj | null = null
+    let lastShownMult = 1
+
+    function showComboBadge(mult: number) {
+      if (comboBadge) return
+      comboBadge = k.add([
+        k.rect(76, 30, { radius: 8 }),
+        k.pos(GAME_CONFIG.WIDTH / 2, 66),
+        k.anchor('center'),
+        k.color(...C.CHIP_BG),
+        k.opacity(0.5),
+        k.scale(1),
+        k.outline(2, k.rgb(C.COMBO_TEXT[0], C.COMBO_TEXT[1], C.COMBO_TEXT[2]), 0.85),
+        k.z(199),
+      ])
+      comboStar = k.add([
+        k.polygon(starPts(k, 7, 3)),
+        k.pos(GAME_CONFIG.WIDTH / 2 - 22, 66),
+        k.anchor('center'),
+        k.color(...C.COIN),
+        k.z(200),
+      ])
+      comboText = k.add([
+        k.text(`x${mult}`, { size: 20 }),
+        k.pos(GAME_CONFIG.WIDTH / 2 + 8, 66),
+        k.anchor('center'),
+        k.color(...C.COMBO_TEXT),
+        k.scale(1),
+        k.z(200),
+      ])
+    }
+
+    function destroyComboBadge() {
+      if (comboBadge && comboBadge.exists()) comboBadge.destroy()
+      if (comboStar && comboStar.exists()) comboStar.destroy()
+      if (comboText && comboText.exists()) comboText.destroy()
+      comboBadge = null
+      comboStar = null
+      comboText = null
+    }
+
+    // === COMBO LEVEL-UP VFX (gold ring + brief flash, only on increment)
+    function comboLevelUpVFX() {
+      // Expanding ring at top center near combo badge
+      const ring = k.add([
+        k.circle(8),
+        k.pos(GAME_CONFIG.WIDTH / 2, 66),
+        k.anchor('center'),
+        k.color(...C.COIN_RING),
+        k.opacity(0.85),
+        k.scale(1),
+        k.z(240),
+      ])
+      k.tween(1, 6, 0.32, (v: number) => { if (ring.exists()) ring.scaleTo(v) }, k.easings.easeOutQuad)
+      k.tween(0.85, 0, 0.32, (v: number) => { if (ring.exists()) ring.opacity = v })
+      k.wait(0.34, () => { if (ring.exists()) ring.destroy() })
+
+      // Brief gold tint flash
+      const flash = k.add([
+        k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
+        k.pos(0, 0),
+        k.color(...C.COIN_RING),
+        k.opacity(0.15),
+        k.lifespan(0.1, { fade: 0.08 }),
+        k.z(241),
+      ])
+      void flash
+
+      // Pop the badge
+      if (comboBadge && comboBadge.exists()) {
+        k.tween(1.4, 1, 0.18, (v: number) => { if (comboBadge && comboBadge.exists()) comboBadge.scaleTo(v) }, k.easings.easeOutBack)
+      }
+      if (comboText && comboText.exists()) {
+        k.tween(1.4, 1, 0.18, (v: number) => { if (comboText && comboText.exists()) comboText.scaleTo(v) }, k.easings.easeOutBack)
+      }
+    }
 
     // === SPEED LINES (only above speed 8) ===
     let speedLineCount = 0
@@ -321,24 +495,21 @@ export function createGameScene(k: KAPLAYCtx) {
       scoreText.text = String(scoring.getScore())
       coinText.text = String(scoring.getCoins())
 
-      // Combo display
+      // Combo display + level-up VFX (only on increment)
       const mult = scoring.getMultiplier()
       if (mult > 1) {
-        if (!comboText) {
-          comboText = k.add([
-            k.text(`x${mult}`, { size: 22 }),
-            k.pos(GAME_CONFIG.WIDTH / 2, 60),
-            k.anchor('center'),
-            k.color(...C.COMBO_TEXT),
-            k.z(200),
-          ])
-        } else {
+        if (!comboBadge) {
+          showComboBadge(mult)
+        } else if (comboText && comboText.exists()) {
           comboText.text = `x${mult}`
         }
-      } else if (comboText && comboText.exists()) {
-        comboText.destroy()
-        comboText = null
+        if (mult > lastShownMult) {
+          comboLevelUpVFX()
+        }
+      } else if (comboBadge) {
+        destroyComboBadge()
       }
+      lastShownMult = mult
 
       // Update spawner
       spawner.update(dt, gameSpeed)
@@ -353,7 +524,7 @@ export function createGameScene(k: KAPLAYCtx) {
         const scale = getDepthScale(y)
         line.pos.y = y
         line.width = 300 * scale
-        line.opacity = 0.2 + progress * 0.4
+        line.opacity = 0.12 + progress * 0.32
       }
 
       // Speed lines (only above speed 8) - simplified without tracking array
@@ -377,10 +548,10 @@ export function createGameScene(k: KAPLAYCtx) {
       const playerX = player.exists() ? player.pos.x : 0
       const playerY = player.exists() ? player.pos.y : 0
       const playerExists = player.exists()
-      
+
       for (const coin of coins) {
         if (!coin.exists()) continue
-        
+
         const pastBottom = updateCoin(k, coin, gameSpeed, dt)
         if (pastBottom) {
           coin.destroy()
@@ -392,7 +563,7 @@ export function createGameScene(k: KAPLAYCtx) {
         if (!playerExists) continue
         const dy = Math.abs(coin.pos.y - playerY)
         if (dy > 60) continue // Early exit if not close enough vertically
-        
+
         const dx = Math.abs(coin.pos.x - playerX)
         if (dx < 35 && dy < 45) {
           createCoinCollectEffect(k, coin.pos.x, coin.pos.y, scoring.getMultiplier())
@@ -404,14 +575,25 @@ export function createGameScene(k: KAPLAYCtx) {
       // Update obstacles - get once, iterate with early exits
       const obstacles = k.get('obstacle')
       const currentLane = lanes.getCurrentLane()
-      
+      const haloPulseAlpha = 0.225 + Math.sin(k.time() * 4.2) * 0.075
+
       for (const obs of obstacles) {
         if (!obs.exists()) continue
-        
+
         const pastBottom = updateObstacle(k, obs, gameSpeed, dt)
         if (pastBottom) {
           obs.destroy()
           continue
+        }
+
+        // Active-lane halo pulse: only the obstacle in the player's current lane glows.
+        // All other halos sit at the static 0.20 set by createObstacle.
+        if (obs.halo && obs.halo.exists()) {
+          if (obs.lane === currentLane) {
+            obs.halo.opacity = haloPulseAlpha
+          } else if (obs.halo.opacity !== 0.2) {
+            obs.halo.opacity = 0.2
+          }
         }
 
         // Early exit: skip collision check if not in player's lane

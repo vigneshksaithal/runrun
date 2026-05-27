@@ -13,10 +13,24 @@ export function createPlayer(k: KAPLAYCtx): GameObj {
     'player',
   ])
 
+  // Drop shadow under feet (squashed circle = ellipse).
+  // Anchored to player so it lane-tilts with him; the squash is hand-tuned
+  // so it stays visually consistent through the existing jump/slide tweens.
+  player.add([
+    k.circle(16),
+    k.color(...C.SHADOW),
+    k.opacity(0.35),
+    k.anchor('center'),
+    k.scale(k.vec2(1, 0.32)),
+    k.pos(0, -2),
+    k.z(-1), // behind body inside the player parent
+  ])
+
   // Legs (bottom)
   player.add([
     k.rect(30, 16),
     k.color(...C.PLAYER_LEGS),
+    k.outline(2, k.rgb(C.OUTLINE[0], C.OUTLINE[1], C.OUTLINE[2])),
     k.anchor('bot'),
     k.pos(0, 0),
   ])
@@ -25,14 +39,16 @@ export function createPlayer(k: KAPLAYCtx): GameObj {
   player.add([
     k.rect(38, 30),
     k.color(...C.PLAYER_BODY),
+    k.outline(2, k.rgb(C.OUTLINE[0], C.OUTLINE[1], C.OUTLINE[2])),
     k.anchor('bot'),
     k.pos(0, -16),
   ])
 
-  // Head (skin)
+  // Head (skin) — outlined for silhouette pop against busy backgrounds
   const head = player.add([
     k.rect(34, 26),
     k.color(...C.PLAYER_HEAD),
+    k.outline(2, k.rgb(C.OUTLINE[0], C.OUTLINE[1], C.OUTLINE[2])),
     k.anchor('bot'),
     k.pos(0, -46),
   ])
@@ -46,35 +62,61 @@ export function createPlayer(k: KAPLAYCtx): GameObj {
   ])
 
   // Left eye
-  head.add([
+  const eyeL = head.add([
     k.rect(5, 5),
     k.color(...C.PLAYER_EYES),
     k.anchor('center'),
+    k.scale(1),
     k.pos(-8, -10),
   ])
 
   // Right eye
-  head.add([
+  const eyeR = head.add([
     k.rect(5, 5),
     k.color(...C.PLAYER_EYES),
     k.anchor('center'),
+    k.scale(1),
     k.pos(8, -10),
   ])
 
   // Running animation state
   let runTime = 0
   let trailTimer = 0
+  let blinkTimer = 0
+  let blinkPhase = 0 // 0 = open, 1 = closing, 2 = opening
 
   // Single unified update handler for all player updates
   player.onUpdate(() => {
     if (!player.exists()) return
-    
+
     const dt = k.dt()
-    
+
     // Head bob animation
     runTime += dt * 6
     head.pos.y = -46 + Math.sin(runTime) * 2
-    
+
+    // Eye blink ~ every 4s, full blink in ~0.12s
+    blinkTimer += dt
+    if (blinkPhase === 0 && blinkTimer >= 4.0) {
+      blinkPhase = 1
+      blinkTimer = 0
+    }
+    if (blinkPhase === 1) {
+      // closing 0.06s
+      const t = Math.min(1, blinkTimer / 0.06)
+      const sy = 1 - t * 0.9 // down to 0.1
+      eyeL.scale = k.vec2(1, sy)
+      eyeR.scale = k.vec2(1, sy)
+      if (t >= 1) { blinkPhase = 2; blinkTimer = 0 }
+    } else if (blinkPhase === 2) {
+      // opening 0.06s
+      const t = Math.min(1, blinkTimer / 0.06)
+      const sy = 0.1 + t * 0.9
+      eyeL.scale = k.vec2(1, sy)
+      eyeR.scale = k.vec2(1, sy)
+      if (t >= 1) { blinkPhase = 0; blinkTimer = 0 }
+    }
+
     // Trail particles (reduced frequency: 0.2s instead of 0.15s)
     trailTimer += dt
     if (trailTimer >= 0.2) {
