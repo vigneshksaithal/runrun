@@ -78,6 +78,15 @@ export function createScoringSystem() {
       }
     },
 
+    addNearMiss() {
+      score += GAME_CONFIG.NEAR_MISS_SCORE * multiplier
+      comboCount++ // near-misses count toward combo
+      if (comboCount >= GAME_CONFIG.COMBO_THRESHOLD) {
+        multiplier = Math.min(multiplier + 1, GAME_CONFIG.MAX_MULTIPLIER)
+        comboCount = 0
+      }
+    },
+
     breakCombo() {
       comboCount = 0
       multiplier = 1
