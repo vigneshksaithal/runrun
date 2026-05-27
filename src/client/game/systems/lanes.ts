@@ -50,9 +50,14 @@ export function createLaneSystem() {
     },
 
     update(dt: number) {
-      // Smooth lerp to target lane
+      // Clamp dt to prevent physics explosions on tab switch/lag spikes
+      const clampedDt = Math.min(dt, 0.05)
+      
+      // Smooth lerp to target lane using proper exponential smoothing
+      // Formula: current = current + (target - current) * (1 - e^(-speed * dt))
+      const lerpFactor = 1 - Math.exp(-12 * clampedDt)
       const diff = targetX - currentX
-      currentX += diff * GAME_CONFIG.LANE_SWITCH_SPEED
+      currentX += diff * lerpFactor
 
       // Snap when very close
       if (Math.abs(diff) < 0.5) {
@@ -60,9 +65,9 @@ export function createLaneSystem() {
         isMoving = false
       }
 
-      // Decay tilt back to 0
+      // Decay tilt back to 0 using exponential decay
       if (Math.abs(tiltAngle) > 0.5) {
-        tiltAngle -= tiltAngle * TILT_DECAY * dt
+        tiltAngle *= Math.exp(-TILT_DECAY * clampedDt)
       } else {
         tiltAngle = 0
       }

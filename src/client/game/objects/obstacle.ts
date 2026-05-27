@@ -161,19 +161,17 @@ export function updateObstacle(k: KAPLAYCtx, obstacle: GameObj, speed: number, d
 }
 
 export function createObstacleDestroyEffect(k: KAPLAYCtx, x: number, y: number) {
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2
-    const speed = k.rand(60, 150)
-
+  // Reduced to 5 particles (down from 8) using built-in move()
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * 360
     k.add([
-      k.rect(k.rand(5, 10), k.rand(5, 10)),
+      k.rect(k.rand(5, 9), k.rand(5, 9)),
       k.pos(x, y - 20),
       k.anchor('center'),
-      k.color(...C.PARTICLE_STONE),
-      k.opacity(1),
-      k.scale(1),
-      k.lifespan(0.35, { fade: 0.25 }),
-      k.move(k.Vec2.fromAngle(k.rad2deg(angle)), speed),
+      k.color(C.PARTICLE_STONE[0], C.PARTICLE_STONE[1], C.PARTICLE_STONE[2]),
+      k.opacity(0.9),
+      k.lifespan(0.3, { fade: 0.2 }),
+      k.move(angle, k.rand(60, 120)),
       k.z(150),
     ])
   }
