@@ -63,35 +63,31 @@ export function createPlayer(k: KAPLAYCtx): GameObj {
 
   // Running animation state
   let runTime = 0
-  let isJumping = false
-  let isSliding = false
-
-  player.onUpdate(() => {
-    if (!player.exists()) return
-    if (isJumping || isSliding) return
-    runTime += k.dt() * 6
-    // Simple head bob
-    head.pos.y = -46 + Math.sin(runTime) * 2
-  })
-
-  // Trail particles
   let trailTimer = 0
+
+  // Single unified update handler for all player updates
   player.onUpdate(() => {
     if (!player.exists()) return
-    trailTimer += k.dt()
-    if (trailTimer >= 0.15) {
+    
+    const dt = k.dt()
+    
+    // Head bob animation
+    runTime += dt * 6
+    head.pos.y = -46 + Math.sin(runTime) * 2
+    
+    // Trail particles (reduced frequency: 0.2s instead of 0.15s)
+    trailTimer += dt
+    if (trailTimer >= 0.2) {
       trailTimer = 0
-      const trail = k.add([
+      k.add([
         k.rect(6, 6),
         k.pos(player.pos.x + k.rand(-8, 8), player.pos.y - 4),
         k.anchor('center'),
         k.color(...C.PARTICLE_DUST),
         k.opacity(0.5),
-        k.scale(1),
-        k.lifespan(0.3, { fade: 0.2 }),
+        k.lifespan(0.25, { fade: 0.15 }),
         k.z(50),
       ])
-      void trail
     }
   })
 
@@ -172,27 +168,22 @@ export function createDeathParticles(k: KAPLAYCtx, x: number, y: number) {
     C.PLAYER_HEAD,
     C.PLAYER_HAIR,
     C.PLAYER_LEGS,
-    C.PLAYER_BODY,
-    C.PLAYER_HEAD,
   ]
 
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2
-    const speed = k.rand(150, 350)
-    const color = colors[i % colors.length]
-    const size = k.rand(6, 14)
+  // Reduced to 8 particles (down from 12) using built-in move()
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * 360
+    const color = colors[i % colors.length]!
 
-    const p = k.add([
-      k.rect(size, size),
+    k.add([
+      k.rect(k.rand(6, 12), k.rand(6, 12)),
       k.pos(x, y - 30),
       k.anchor('center'),
-      k.color(...color),
+      k.color(color[0], color[1], color[2]),
       k.opacity(1),
-      k.scale(1),
-      k.lifespan(0.4, { fade: 0.3 }),
-      k.move(k.Vec2.fromAngle(k.rad2deg(angle)), speed),
+      k.lifespan(0.35, { fade: 0.25 }),
+      k.move(angle, k.rand(150, 300)),
       k.z(200),
     ])
-    void p
   }
 }

@@ -69,42 +69,31 @@ export function updateCoin(k: KAPLAYCtx, coin: GameObj, speed: number, dt: numbe
 }
 
 export function createCoinCollectEffect(k: KAPLAYCtx, x: number, y: number, multiplier: number = 1) {
-  // 6 stepped voxel chunks (no smooth tween - stepped positions)
-  const angles = [0, 60, 120, 180, 240, 300]
-  for (let i = 0; i < 6; i++) {
-    const angle = angles[i]! * (Math.PI / 180)
-    const speed = k.rand(100, 200)
-    const size = k.rand(5, 9)
-
+  // Reduced to 4 particles (down from 6) using built-in move() instead of manual updates
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * 360
     k.add([
-      k.rect(size, size),
+      k.rect(6, 6),
       k.pos(x, y),
       k.anchor('center'),
       k.color(...C.PARTICLE_GOLD),
-      k.opacity(1),
-      k.scale(1),
-      k.lifespan(0.3, { fade: 0.2 }),
-      k.move(k.Vec2.fromAngle(k.rad2deg(angle)), speed),
+      k.opacity(0.9),
+      k.lifespan(0.25, { fade: 0.15 }),
+      k.move(angle, k.rand(80, 150)),
       k.z(150),
     ])
   }
 
-  // "+N" text with multiplier-aware value (3-step rise)
+  // "+N" text - simplified animation using built-in move()
   const pointValue = GAME_CONFIG.COIN_SCORE * multiplier
-  const txt = k.add([
-    k.text(`+${pointValue}`, { size: 20 }),
+  k.add([
+    k.text(`+${pointValue}`, { size: 18 }),
     k.pos(x, y - 10),
     k.anchor('center'),
     k.color(...C.TEXT_GOLD),
     k.opacity(1),
-    k.scale(1.4),
-    k.lifespan(0.45, { fade: 0.3 }),
+    k.lifespan(0.35, { fade: 0.2 }),
+    k.move(k.Vec2.UP, 80),
     k.z(160),
   ])
-
-  // Stepped rise: 3 discrete y positions instead of smooth tween
-  const startY = txt.pos.y
-  k.wait(0.1, () => { if (txt.exists()) txt.pos.y = startY - 12 })
-  k.wait(0.2, () => { if (txt.exists()) { txt.pos.y = startY - 24; txt.scale = k.vec2(1) } })
-  k.wait(0.3, () => { if (txt.exists()) txt.pos.y = startY - 36 })
 }

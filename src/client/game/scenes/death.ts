@@ -41,37 +41,24 @@ export function createDeathScene(k: KAPLAYCtx) {
     )
     k.wait(0.3, () => { if (flash.exists()) flash.destroy() })
 
-    // Voxel chunk explosion from player position
+    // Voxel chunk explosion from player position - reduced to 6 particles using built-in move()
     const chunkColors: [number, number, number][] = [
       C.PLAYER_BODY, C.PLAYER_HEAD, C.PLAYER_HAIR,
       C.PLAYER_LEGS, C.PLAYER_BODY, C.PLAYER_HEAD,
-      C.PLAYER_HAIR, C.PLAYER_LEGS, C.PLAYER_BODY, C.PLAYER_HEAD,
     ]
-    for (let i = 0; i < 10; i++) {
-      const angle = (i / 10) * Math.PI * 2
-      const speed = k.rand(120, 320)
-      const size = k.rand(8, 16)
-      const color = chunkColors[i % chunkColors.length]!
-      const chunk = k.add([
-        k.rect(size, size),
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * 360
+      const color = chunkColors[i]!
+      k.add([
+        k.rect(k.rand(8, 14), k.rand(8, 14)),
         k.pos(px, py - 30),
         k.anchor('center'),
         k.color(color[0], color[1], color[2]),
         k.opacity(1),
-        k.scale(1),
         k.z(250),
-        k.move(k.Vec2.fromAngle(k.rad2deg(angle)), speed),
-        { vy: k.rand(-300, -100) as number, spin: k.rand(-400, 400) as number },
+        k.lifespan(0.5, { fade: 0.35 }),
+        k.move(angle, k.rand(150, 280)),
       ])
-      // Gravity + spin
-      chunk.onUpdate(() => {
-        if (!chunk.exists()) return
-        chunk.vy += 800 * k.dt()
-        chunk.pos.y += chunk.vy * k.dt()
-        chunk.angle += chunk.spin * k.dt()
-        chunk.opacity -= k.dt() * 1.2
-        if (chunk.opacity <= 0) chunk.destroy()
-      })
     }
 
     // === DARK OVERLAY (slides in from top) ===

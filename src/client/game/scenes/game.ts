@@ -261,13 +261,15 @@ export function createGameScene(k: KAPLAYCtx) {
     let comboText: GameObj | null = null
 
     // === SPEED LINES (only above speed 8) ===
-    const speedLines: GameObj[] = []
+    let speedLineCount = 0
 
     // === GAME LOOP ===
     k.onUpdate(() => {
       if (isDead) return
 
-      const dt = k.dt()
+      // Clamp dt to prevent physics explosions on lag spikes/tab switches
+      const rawDt = k.dt()
+      const dt = Math.min(rawDt, 0.05)
 
       // Increase speed
       gameSpeed = Math.min(gameSpeed + GAME_CONFIG.SPEED_INCREASE_RATE * dt, GAME_CONFIG.MAX_SPEED)
@@ -293,23 +295,21 @@ export function createGameScene(k: KAPLAYCtx) {
         // Apply tilt rotation
         player.angle = lanes.getTilt()
 
-        // Ghost trail during lane change
+        // Ghost trail during lane change (reduced frequency)
         if (lanes.isLaneChanging()) {
           ghostTimer += dt
-          if (ghostTimer >= 0.04) {
+          if (ghostTimer >= 0.06) {
             ghostTimer = 0
-            const ghost = k.add([
+            k.add([
               k.rect(38, 60),
               k.pos(player.pos.x, player.pos.y - 30),
               k.anchor('center'),
-              k.color(...C.PLAYER_BODY),
+              k.color(C.PLAYER_BODY[0], C.PLAYER_BODY[1], C.PLAYER_BODY[2]),
               k.opacity(0.3),
-              k.scale(1),
+              k.rotate(player.angle),
               k.z(90),
-              k.lifespan(0.15, { fade: 0.12 }),
+              k.lifespan(0.12, { fade: 0.1 }),
             ])
-            ghost.angle = player.angle
-            void ghost
           }
         } else {
           ghostTimer = 0
@@ -356,44 +356,44 @@ export function createGameScene(k: KAPLAYCtx) {
         line.opacity = 0.2 + progress * 0.4
       }
 
-      // Speed lines (only above speed 8)
-      if (gameSpeed > 8) {
-        if (speedLines.length < 4 && k.rand(0, 1) < 0.1) {
-          const sl = k.add([
-            k.rect(2, k.rand(30, 60)),
-            k.pos(k.rand(100, 500), -20),
-            k.anchor('center'),
-            k.color(...C.SPEED_LINE),
-            k.opacity(0.3),
-            k.scale(1),
-            k.lifespan(0.4, { fade: 0.3 }),
-            k.z(5),
-          ])
-          speedLines.push(sl)
-          sl.onUpdate(() => {
-            sl.pos.y += 800 * dt
-          })
-          sl.onDestroy(() => {
-            const idx = speedLines.indexOf(sl)
-            if (idx >= 0) speedLines.splice(idx, 1)
-          })
-        }
+      // Speed lines (only above speed 8) - simplified without tracking array
+      if (gameSpeed > 8 && speedLineCount < 4 && k.rand(0, 1) < 0.08) {
+        speedLineCount++
+        const sl = k.add([
+          k.rect(2, k.rand(30, 60)),
+          k.pos(k.rand(100, 500), -20),
+          k.anchor('center'),
+          k.color(...C.SPEED_LINE),
+          k.opacity(0.3),
+          k.lifespan(0.35, { fade: 0.25 }),
+          k.move(k.Vec2.DOWN, 800),
+          k.z(5),
+        ])
+        sl.onDestroy(() => { speedLineCount-- })
       }
 
-      // Update coins
+      // Update coins - get once, iterate with early exits
       const coins = k.get('coin')
+      const playerX = player.exists() ? player.pos.x : 0
+      const playerY = player.exists() ? player.pos.y : 0
+      const playerExists = player.exists()
+      
       for (const coin of coins) {
+        if (!coin.exists()) continue
+        
         const pastBottom = updateCoin(k, coin, gameSpeed, dt)
-        if (pastBottom && coin.exists()) {
+        if (pastBottom) {
           coin.destroy()
           scoring.breakCombo()
           continue
         }
 
-        // Collision check with player
-        if (!coin.exists() || !player.exists()) continue
-        const dx = Math.abs(coin.pos.x - player.pos.x)
-        const dy = Math.abs(coin.pos.y - player.pos.y)
+        // Collision check with player (only if player exists and coin is near player Y)
+        if (!playerExists) continue
+        const dy = Math.abs(coin.pos.y - playerY)
+        if (dy > 60) continue // Early exit if not close enough vertically
+        
+        const dx = Math.abs(coin.pos.x - playerX)
         if (dx < 35 && dy < 45) {
           createCoinCollectEffect(k, coin.pos.x, coin.pos.y, scoring.getMultiplier())
           coin.destroy()
@@ -401,27 +401,30 @@ export function createGameScene(k: KAPLAYCtx) {
         }
       }
 
-      // Update obstacles
+      // Update obstacles - get once, iterate with early exits
       const obstacles = k.get('obstacle')
+      const currentLane = lanes.getCurrentLane()
+      
       for (const obs of obstacles) {
+        if (!obs.exists()) continue
+        
         const pastBottom = updateObstacle(k, obs, gameSpeed, dt)
-        if (pastBottom && obs.exists()) {
+        if (pastBottom) {
           obs.destroy()
           continue
         }
 
-        // Collision check
-        if (!obs.exists() || !player.exists()) continue
-        if (obs.lane !== lanes.getCurrentLane()) continue
+        // Early exit: skip collision check if not in player's lane
+        if (obs.lane !== currentLane) continue
+        if (!playerExists) continue
 
-        const dy = Math.abs(obs.baseY - GAME_CONFIG.PLAYER_Y)
-        if (dy > 40) continue
+        const obsY = Math.abs(obs.baseY - GAME_CONFIG.PLAYER_Y)
+        if (obsY > 40) continue
 
         // Check obstacle type vs player action
         const type = obs.obstacleType as string
         if (type === 'stone_wall' && isJumping) continue
         if (type === 'low_beam' && isSliding) continue
-        // Pillar: must switch lanes (already checked lane above)
 
         // COLLISION - HIT
         handleHit(obs)
@@ -438,8 +441,9 @@ export function createGameScene(k: KAPLAYCtx) {
       // Update heart display
       const currentLives = scoring.getLives()
       for (let i = 0; i < hearts.length; i++) {
-        if (hearts[i].exists()) {
-          hearts[i].opacity = i < currentLives ? 1 : 0.2
+        const heart = hearts[i]
+        if (heart && heart.exists()) {
+          heart.opacity = i < currentLives ? 1 : 0.2
         }
       }
 
