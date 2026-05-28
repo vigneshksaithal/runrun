@@ -20,340 +20,214 @@ export function createDeathScene(k: KAPLAYCtx) {
     const px = params?.playerX ?? GAME_CONFIG.VANISHING_POINT_X
     const py = params?.playerY ?? GAME_CONFIG.PLAYER_Y
 
-    // === DEATH VFX ===
-
-    // Screen shake
-    k.shake(15)
-
-    // Red flash overlay
-    const flash = k.add([
-      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
-      k.pos(0, 0),
-      k.color(255, 40, 40),
-      k.opacity(0.5),
-      k.z(300),
-    ])
-    k.tween(
-      0.5,
-      0,
-      0.3,
-      (v: number) => { if (flash.exists()) flash.opacity = v },
-      k.easings.easeOutQuad,
-    )
-    k.wait(0.35, () => { if (flash.exists()) flash.destroy() })
-
-    // Player explosion particles
+    // Effects
+    k.shake(12)
     createDeathParticles(k, px, py)
 
-    // === BACKGROUND (blurred game state illusion) ===
-    // Sky colors
+    // Background
     k.add([
-      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT * 0.4),
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT * 0.5),
       k.pos(0, 0),
       k.color(...C.SKY_TOP),
       k.z(0),
     ])
     k.add([
-      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT * 0.3),
-      k.pos(0, GAME_CONFIG.HEIGHT * 0.35),
-      k.color(...C.SKY_MID),
-      k.z(0),
-    ])
-    k.add([
-      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT * 0.4),
-      k.pos(0, GAME_CONFIG.HEIGHT * 0.6),
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT * 0.5),
+      k.pos(0, GAME_CONFIG.HEIGHT * 0.5),
       k.color(...C.SKY_BOTTOM),
       k.z(0),
     ])
-
-    // Track
     k.add([
       k.rect(GAME_CONFIG.WIDTH, 300),
       k.pos(0, 500),
-      k.color(...C.TRACK_MAIN),
+      k.color(...C.GROUND),
       k.z(1),
     ])
 
-    // === DARK OVERLAY (slides in) ===
+    // Dark overlay
     const overlay = k.add([
       k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
-      k.pos(0, -GAME_CONFIG.HEIGHT),
+      k.pos(0, 0),
       k.color(0, 0, 0),
-      k.opacity(0.85),
-      k.z(260),
+      k.opacity(0),
+      k.z(250),
     ])
-    k.tween(
-      -GAME_CONFIG.HEIGHT,
-      0,
-      0.45,
-      (v: number) => { if (overlay.exists()) overlay.pos.y = v },
-      k.easings.easeOutCubic,
-    )
 
-    // === SCORE DISPLAY (appears after overlay) ===
-    k.wait(0.5, () => {
-      // GAME OVER title with slam animation
-      const titleShadow = k.add([
-        k.text('GAME OVER', { size: 44 }),
-        k.pos(GAME_CONFIG.WIDTH / 2 + 3, 203),
-        k.anchor('center'),
-        k.color(...C.TEXT_SHADOW),
-        k.scale(2.5),
-        k.opacity(0),
-        k.z(270),
-      ])
+    k.tween(0, 0.8, 0.4, (v) => {
+      if (overlay.exists()) overlay.opacity = v
+    })
 
+    // UI appears after overlay
+    k.wait(0.4, () => {
+      // Game Over title
       const title = k.add([
-        k.text('GAME OVER', { size: 44 }),
-        k.pos(GAME_CONFIG.WIDTH / 2, 200),
+        k.text('GAME OVER', { size: 42 }),
+        k.pos(GAME_CONFIG.WIDTH / 2, 180),
         k.anchor('center'),
         k.color(...C.TEXT_WHITE),
-        k.scale(2.5),
+        k.scale(2),
         k.opacity(0),
-        k.z(271),
+        k.z(260),
       ])
 
-      // Slam in animation
-      k.tween(2.5, 1, 0.25, (v: number) => {
+      k.tween(2, 1, 0.2, (v) => {
         if (title.exists()) {
           title.scale.x = v
           title.scale.y = v
         }
-        if (titleShadow.exists()) {
-          titleShadow.scale.x = v
-          titleShadow.scale.y = v
-        }
       }, k.easings.easeOutBack)
-      k.tween(0, 1, 0.2, (v: number) => {
+
+      k.tween(0, 1, 0.2, (v) => {
         if (title.exists()) title.opacity = v
-        if (titleShadow.exists()) titleShadow.opacity = v * 0.4
       })
 
-      // Score panel background
+      // Score panel
       k.add([
-        k.rect(220, 120),
-        k.pos(GAME_CONFIG.WIDTH / 2, 330),
+        k.rect(200, 100),
+        k.pos(GAME_CONFIG.WIDTH / 2, 310),
         k.anchor('center'),
         k.color(0, 0, 0),
         k.opacity(0.5),
-        k.z(270),
+        k.z(260),
       ])
 
-      // "SCORE" label
       k.add([
-        k.text('SCORE', { size: 18 }),
-        k.pos(GAME_CONFIG.WIDTH / 2, 285),
+        k.text('SCORE', { size: 16 }),
+        k.pos(GAME_CONFIG.WIDTH / 2, 275),
         k.anchor('center'),
         k.color(...C.TEXT_WHITE),
         k.opacity(0.7),
-        k.z(271),
+        k.z(261),
       ])
 
-      // Score counter (animates from 0 to final)
       const scoreLabel = k.add([
-        k.text('0', { size: 52 }),
-        k.pos(GAME_CONFIG.WIDTH / 2, 335),
+        k.text('0', { size: 48 }),
+        k.pos(GAME_CONFIG.WIDTH / 2, 320),
         k.anchor('center'),
         k.color(...C.TEXT_GOLD),
-        k.scale(1),
-        k.z(271),
+        k.z(261),
       ])
 
-      let displayedScore = 0
-      const scoreSpeed = Math.max(score / 0.7, 80)
+      // Animate score counting
+      let displayed = 0
+      const speed = Math.max(score / 0.6, 100)
       scoreLabel.onUpdate(() => {
-        if (displayedScore < score) {
-          displayedScore = Math.min(score, displayedScore + scoreSpeed * k.dt())
-          scoreLabel.text = String(Math.floor(displayedScore))
+        if (displayed < score) {
+          displayed = Math.min(score, displayed + speed * k.dt())
+          scoreLabel.text = String(Math.floor(displayed))
         }
       })
 
-      // Score pop when finished counting
-      k.wait(0.75, () => {
-        k.tween(1, 1.15, 0.1, (v: number) => {
-          if (scoreLabel.exists()) {
-            scoreLabel.scale.x = v
-            scoreLabel.scale.y = v
-          }
-        }, k.easings.easeOutQuad).then(() => {
-          k.tween(1.15, 1, 0.1, (v: number) => {
-            if (scoreLabel.exists()) {
-              scoreLabel.scale.x = v
-              scoreLabel.scale.y = v
-            }
-          }, k.easings.easeOutQuad)
-        })
-      })
-
-      // NEW BEST badge
+      // New best badge
       if (isNewHigh) {
-        k.wait(0.6, () => {
+        k.wait(0.5, () => {
           const badge = k.add([
-            k.text('NEW BEST!', { size: 26 }),
-            k.pos(GAME_CONFIG.WIDTH / 2, 400),
+            k.text('NEW BEST!', { size: 24 }),
+            k.pos(GAME_CONFIG.WIDTH / 2, 380),
             k.anchor('center'),
-            k.color(...C.COMBO_GREEN),
-            k.scale(2),
+            k.color(...C.COMBO),
+            k.scale(1.5),
             k.opacity(0),
-            k.z(272),
+            k.z(262),
           ])
 
-          k.tween(2, 1, 0.25, (v: number) => {
+          k.tween(1.5, 1, 0.2, (v) => {
             if (badge.exists()) {
               badge.scale.x = v
               badge.scale.y = v
             }
           }, k.easings.easeOutBack)
-          k.tween(0, 1, 0.2, (v: number) => { if (badge.exists()) badge.opacity = v })
 
-          // Sparkle particles
-          for (let i = 0; i < 8; i++) {
-            const angle = (i / 8) * 360
-            k.wait(0.1 + i * 0.03, () => {
-              k.add([
-                k.rect(6, 6),
-                k.pos(GAME_CONFIG.WIDTH / 2, 400),
-                k.anchor('center'),
-                k.color(...C.PARTICLE_GOLD),
-                k.opacity(1),
-                k.lifespan(0.4, { fade: 0.3 }),
-                k.move(angle, k.rand(80, 150)),
-                k.z(273),
-              ])
-            })
-          }
+          k.tween(0, 1, 0.2, (v) => {
+            if (badge.exists()) badge.opacity = v
+          })
         })
       }
 
       // Coins collected
       k.add([
-        k.rect(100, 40),
-        k.pos(GAME_CONFIG.WIDTH / 2, 460),
+        k.rect(90, 36),
+        k.pos(GAME_CONFIG.WIDTH / 2, 440),
         k.anchor('center'),
         k.color(0, 0, 0),
         k.opacity(0.4),
-        k.z(270),
-      ])
-
-      // Coin icon
-      k.add([
-        k.rect(22, 22),
-        k.pos(GAME_CONFIG.WIDTH / 2 - 35, 460),
-        k.anchor('center'),
-        k.color(...C.COIN_GOLD),
-        k.z(271),
-      ])
-      k.add([
-        k.rect(16, 16),
-        k.pos(GAME_CONFIG.WIDTH / 2 - 35, 460),
-        k.anchor('center'),
-        k.color(...C.COIN_DARK),
-        k.opacity(0.4),
-        k.z(271),
+        k.z(260),
       ])
 
       k.add([
-        k.text(`${coins}`, { size: 26 }),
-        k.pos(GAME_CONFIG.WIDTH / 2 + 5, 460),
+        k.ellipse(12, 12),
+        k.pos(GAME_CONFIG.WIDTH / 2 - 30, 440),
+        k.anchor('center'),
+        k.color(...C.COIN),
+        k.z(261),
+      ])
+
+      k.add([
+        k.text(`${coins}`, { size: 24 }),
+        k.pos(GAME_CONFIG.WIDTH / 2 + 5, 440),
         k.anchor('center'),
         k.color(...C.TEXT_GOLD),
-        k.z(271),
+        k.z(261),
       ])
 
-      // === RETRY BUTTON ===
-      const retryBtn = k.add([
-        k.rect(200, 64),
-        k.pos(GAME_CONFIG.WIDTH / 2, 560),
+      // Retry button
+      const btn = k.add([
+        k.rect(180, 55),
+        k.pos(GAME_CONFIG.WIDTH / 2, 530),
         k.anchor('center'),
-        k.color(...C.BUTTON_PLAY),
-        k.scale(1),
-        k.z(272),
+        k.color(...C.BUTTON),
+        k.z(262),
       ])
 
-      // Button 3D bottom
-      retryBtn.add([
-        k.rect(200, 20),
-        k.color(...C.BUTTON_PLAY_DARK),
+      btn.add([
+        k.rect(180, 16),
+        k.color(...C.BUTTON_DARK),
         k.anchor('bot'),
-        k.pos(0, 32),
+        k.pos(0, 27),
       ])
 
-      // Button text
-      retryBtn.add([
-        k.text('TAP TO RETRY', { size: 24 }),
+      btn.add([
+        k.text('TAP TO RETRY', { size: 22 }),
         k.color(...C.TEXT_WHITE),
         k.anchor('center'),
-        k.pos(0, -5),
+        k.pos(0, -3),
       ])
 
-      // Button pulse
-      let pulseT = 0
-      retryBtn.onUpdate(() => {
-        pulseT += k.dt() * 4
-        const s = 1 + Math.sin(pulseT) * 0.05
-        retryBtn.scale.x = s
-        retryBtn.scale.y = s
+      let pulse = 0
+      btn.onUpdate(() => {
+        pulse += k.dt() * 4
+        btn.scale.x = btn.scale.y = 1 + Math.sin(pulse) * 0.04
       })
 
-      // Hint text
-      k.add([
-        k.text('or wait 3 seconds...', { size: 12 }),
-        k.pos(GAME_CONFIG.WIDTH / 2, 610),
-        k.anchor('center'),
-        k.color(...C.TEXT_WHITE),
-        k.opacity(0.5),
-        k.z(270),
-      ])
-
-      // === RESTART LOGIC ===
+      // Restart
       let canRestart = true
       const restart = () => {
-        if (canRestart) {
-          canRestart = false
-          // Fade out transition
-          const fadeOut = k.add([
-            k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
-            k.pos(0, 0),
-            k.color(0, 0, 0),
-            k.opacity(0),
-            k.z(400),
-          ])
-          k.tween(0, 1, 0.25, (v: number) => {
-            if (fadeOut.exists()) fadeOut.opacity = v
-          }, k.easings.easeInQuad).then(() => {
-            k.go('game')
-          })
-        }
+        if (!canRestart) return
+        canRestart = false
+
+        const fade = k.add([
+          k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
+          k.pos(0, 0),
+          k.color(0, 0, 0),
+          k.opacity(0),
+          k.z(300),
+        ])
+
+        k.tween(0, 1, 0.2, (v) => {
+          if (fade.exists()) fade.opacity = v
+        }).then(() => {
+          k.go('game')
+        })
       }
 
       k.onKeyPress(restart)
       k.onMousePress(restart)
       k.onTouchStart(restart)
 
-      // Auto-restart after 3s
-      k.wait(3.0, () => {
+      // Auto restart
+      k.wait(3, () => {
         if (canRestart) restart()
       })
     })
-
-    // === FLOATING PARTICLES (ambience) ===
-    for (let i = 0; i < 6; i++) {
-      const p = k.add([
-        k.rect(k.rand(4, 8), k.rand(4, 8)),
-        k.pos(k.rand(50, 550), k.rand(100, 700)),
-        k.anchor('center'),
-        k.color(...C.PARTICLE_WHITE),
-        k.opacity(k.rand(0.1, 0.25)),
-        k.z(265),
-      ])
-
-      const startY = p.pos.y
-      let t = k.rand(0, Math.PI * 2)
-      p.onUpdate(() => {
-        t += k.dt() * 0.8
-        p.pos.y = startY + Math.sin(t) * 30
-        p.pos.x += k.dt() * k.rand(-3, 3)
-      })
-    }
   })
 }

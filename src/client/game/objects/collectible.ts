@@ -12,82 +12,34 @@ export function createCoin(k: KAPLAYCtx, lane: number): GameObj {
     k.pos(startX, startY),
     k.anchor('center'),
     k.scale(startScale),
-    k.opacity(1),
+    k.opacity(0),
     k.z(80),
     'coin',
-    { lane, baseY: startY, bobTime: k.rand(0, Math.PI * 2), spinTime: k.rand(0, Math.PI * 2) },
+    { lane, baseY: startY, spinTime: k.rand(0, Math.PI * 2) },
   ])
 
-  // Glow effect behind coin
-  const glow = coin.add([
-    k.rect(32, 32),
-    k.color(...C.COIN_GLOW),
-    k.anchor('center'),
-    k.pos(0, 0),
-    k.opacity(0.25),
-  ])
-
-  // Outer ring
+  // Main coin body
   coin.add([
-    k.rect(26, 26),
-    k.color(...C.COIN_DARK),
+    k.ellipse(14, 14),
+    k.color(...C.COIN),
     k.anchor('center'),
-    k.pos(0, 0),
   ])
 
-  // Main gold body
-  const mainBody = coin.add([
-    k.rect(22, 22),
-    k.color(...C.COIN_GOLD),
+  // Inner ring
+  coin.add([
+    k.ellipse(10, 10),
+    k.color(...C.COIN_SHADOW),
     k.anchor('center'),
-    k.pos(0, 0),
+    k.opacity(0.4),
   ])
 
-  // Inner circle (darker)
-  mainBody.add([
-    k.rect(16, 16),
-    k.color(...C.COIN_DARK),
-    k.anchor('center'),
-    k.pos(0, 0),
-    k.opacity(0.3),
-  ])
-
-  // Dollar sign or star symbol
-  mainBody.add([
-    k.rect(4, 12),
-    k.color(...C.COIN_LIGHT),
-    k.anchor('center'),
-    k.pos(0, 0),
-    k.opacity(0.8),
-  ])
-  mainBody.add([
-    k.rect(10, 4),
-    k.color(...C.COIN_LIGHT),
-    k.anchor('center'),
-    k.pos(0, -3),
-    k.opacity(0.8),
-  ])
-  mainBody.add([
-    k.rect(10, 4),
-    k.color(...C.COIN_LIGHT),
-    k.anchor('center'),
-    k.pos(0, 3),
-    k.opacity(0.8),
-  ])
-
-  // Shine highlight (top-left)
-  const shine = coin.add([
-    k.rect(6, 6),
+  // Shine
+  coin.add([
+    k.ellipse(4, 4),
     k.color(...C.COIN_SHINE),
     k.anchor('center'),
-    k.pos(-6, -6),
-    k.opacity(0.9),
+    k.pos(-4, -4),
   ])
-
-  // Store references for animation
-  coin.glowRef = glow
-  coin.shineRef = shine
-  coin.mainRef = mainBody
 
   return coin
 }
@@ -95,198 +47,67 @@ export function createCoin(k: KAPLAYCtx, lane: number): GameObj {
 export function updateCoin(k: KAPLAYCtx, coin: GameObj, speed: number, dt: number): boolean {
   if (!coin.exists()) return false
 
-  // Move toward player
   const moveSpeed = speed * GAME_CONFIG.ROAD_LINE_SPEED_MULT * dt
   coin.baseY += moveSpeed
 
-  // Bob animation (floating up and down)
-  coin.bobTime += dt * 5
-  const bobOffset = Math.sin(coin.bobTime) * 8
-
-  // Spin animation (simulate 3D rotation with scale)
+  // Spin animation
   coin.spinTime += dt * 6
   const spinScale = 0.5 + Math.abs(Math.cos(coin.spinTime)) * 0.5
 
-  // Update position and scale based on depth
   const depthScale = getDepthScale(coin.baseY)
   const x = getLaneXAtDepth(coin.lane, coin.baseY)
 
   coin.pos.x = x
-  coin.pos.y = coin.baseY + bobOffset - 20 // Float above ground
+  coin.pos.y = coin.baseY - 15 // Float above ground
   coin.scale.x = depthScale * spinScale
   coin.scale.y = depthScale
 
-  // Pulsing glow
-  if (coin.glowRef && coin.glowRef.exists()) {
-    coin.glowRef.opacity = 0.2 + Math.sin(coin.bobTime * 2) * 0.1
-    coin.glowRef.width = 32 + Math.sin(coin.bobTime * 2) * 4
-    coin.glowRef.height = 32 + Math.sin(coin.bobTime * 2) * 4
-  }
-
-  // Moving shine effect
-  if (coin.shineRef && coin.shineRef.exists()) {
-    const shineOffset = Math.sin(coin.spinTime) * 4
-    coin.shineRef.pos.x = -6 + shineOffset
-    coin.shineRef.opacity = 0.6 + Math.abs(Math.cos(coin.spinTime)) * 0.4
-  }
-
-  // Fade in smoothly from distance
-  if (coin.baseY < GAME_CONFIG.LANE_Y_TOP + 60) {
-    const fadeProgress = (coin.baseY - GAME_CONFIG.LANE_Y_TOP) / 60
-    coin.opacity = Math.max(0, fadeProgress)
+  // Fade in
+  const fadeStart = GAME_CONFIG.LANE_Y_TOP
+  const fadeEnd = fadeStart + 60
+  if (coin.baseY < fadeEnd) {
+    coin.opacity = Math.max(0, (coin.baseY - fadeStart) / (fadeEnd - fadeStart))
   } else {
     coin.opacity = 1
   }
 
-  // Remove if past bottom
-  return coin.baseY > GAME_CONFIG.LANE_Y_BOTTOM + 50
+  return coin.baseY > GAME_CONFIG.LANE_Y_BOTTOM + 40
 }
 
 export function createCoinCollectEffect(k: KAPLAYCtx, x: number, y: number, multiplier: number = 1) {
-  // Golden particle burst
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * 360
+  // Gold particles
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * 360
     k.add([
-      k.rect(k.rand(6, 10), k.rand(6, 10)),
+      k.rect(6, 6),
       k.pos(x, y),
       k.anchor('center'),
-      k.color(...C.PARTICLE_GOLD),
+      k.color(...C.COIN),
       k.opacity(1),
-      k.lifespan(0.35, { fade: 0.25 }),
-      k.move(angle, k.rand(100, 200)),
+      k.lifespan(0.3, { fade: 0.2 }),
+      k.move(angle, k.rand(80, 150)),
       k.z(150),
     ])
   }
 
-  // Sparkle stars
-  for (let i = 0; i < 5; i++) {
-    const delay = i * 0.03
-    k.wait(delay, () => {
-      k.add([
-        k.rect(4, 4),
-        k.pos(x + k.rand(-25, 25), y + k.rand(-25, 25)),
-        k.anchor('center'),
-        k.color(...C.COIN_SHINE),
-        k.opacity(1),
-        k.lifespan(0.25, { fade: 0.2 }),
-        k.z(160),
-      ])
-    })
-  }
-
-  // Ring expand effect
-  const ring = k.add([
-    k.rect(20, 20),
-    k.pos(x, y),
-    k.anchor('center'),
-    k.color(...C.COIN_GOLD),
-    k.opacity(0.6),
-    k.scale(1),
-    k.z(140),
-  ])
-
-  k.tween(
-    1,
-    3,
-    0.3,
-    (v) => {
-      if (ring.exists()) {
-        ring.scale.x = v
-        ring.scale.y = v
-        ring.opacity = 0.6 * (1 - (v - 1) / 2)
-      }
-    },
-    k.easings.easeOutQuad,
-  ).then(() => {
-    if (ring.exists()) ring.destroy()
-  })
-
-  // Score popup text
-  const pointValue = GAME_CONFIG.COIN_SCORE * multiplier
-  const scoreText = k.add([
-    k.text(`+${pointValue}`, { size: 22 }),
-    k.pos(x, y - 15),
+  // Score popup
+  const points = GAME_CONFIG.COIN_SCORE * multiplier
+  const popup = k.add([
+    k.text(`+${points}`, { size: 20 }),
+    k.pos(x, y - 10),
     k.anchor('center'),
     k.color(...C.TEXT_GOLD),
     k.opacity(1),
-    k.scale(0.5),
-    k.z(170),
+    k.z(160),
   ])
 
-  // Pop in animation
-  k.tween(
-    0.5,
-    1.2,
-    0.12,
-    (v) => { if (scoreText.exists()) scoreText.scale.x = scoreText.scale.y = v },
-    k.easings.easeOutBack,
-  ).then(() => {
-    k.tween(
-      1.2,
-      1,
-      0.1,
-      (v) => { if (scoreText.exists()) scoreText.scale.x = scoreText.scale.y = v },
-      k.easings.easeOutQuad,
-    )
+  k.tween(y - 10, y - 50, 0.4, (v) => {
+    if (popup.exists()) popup.pos.y = v
+  }, k.easings.easeOutQuad)
+
+  k.tween(1, 0, 0.4, (v) => {
+    if (popup.exists()) popup.opacity = v
+  }, k.easings.easeOutQuad).then(() => {
+    if (popup.exists()) popup.destroy()
   })
-
-  // Float up and fade
-  k.tween(
-    y - 15,
-    y - 60,
-    0.5,
-    (v) => { if (scoreText.exists()) scoreText.pos.y = v },
-    k.easings.easeOutQuad,
-  )
-
-  k.wait(0.3, () => {
-    k.tween(
-      1,
-      0,
-      0.2,
-      (v) => { if (scoreText.exists()) scoreText.opacity = v },
-      k.easings.easeOutQuad,
-    ).then(() => {
-      if (scoreText.exists()) scoreText.destroy()
-    })
-  })
-
-  // Multiplier bonus text (if > 1)
-  if (multiplier > 1) {
-    const multText = k.add([
-      k.text(`x${multiplier}`, { size: 16 }),
-      k.pos(x + 25, y - 25),
-      k.anchor('center'),
-      k.color(...C.COMBO_GREEN),
-      k.opacity(1),
-      k.scale(1),
-      k.z(171),
-    ])
-
-    k.tween(
-      y - 25,
-      y - 55,
-      0.4,
-      (v) => {
-        if (multText.exists()) {
-          multText.pos.y = v
-        }
-      },
-      k.easings.easeOutQuad,
-    )
-
-    k.tween(
-      1,
-      0,
-      0.4,
-      (v) => {
-        if (multText.exists()) {
-          multText.opacity = v
-        }
-      },
-      k.easings.easeOutQuad,
-    ).then(() => {
-      if (multText.exists()) multText.destroy()
-    })
-  }
 }
