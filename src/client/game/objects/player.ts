@@ -280,22 +280,38 @@ export function jumpPlayer(k: KAPLAYCtx, player: GameObj): boolean {
     ])
   }
 
+  // Squash and stretch animation using scale values
+  let scaleX = 1
+  let scaleY = 1
+
   // Anticipation squash
   k.tween(
-    k.vec2(1, 1),
-    k.vec2(1.15, 0.8),
+    1,
+    1.15,
     jumpDur * 0.12,
-    (v) => { if (player.exists()) player.scaleTo(v) },
+    (v) => {
+      if (player.exists()) {
+        scaleX = v
+        scaleY = 2 - v // inverse for squash
+        player.scale.x = scaleX
+        player.scale.y = scaleY
+      }
+    },
     k.easings.easeOutQuad,
   ).then(() => {
     if (!player.exists()) return
 
     // Launch stretch
     k.tween(
-      k.vec2(1.15, 0.8),
-      k.vec2(0.85, 1.2),
+      1.15,
+      0.85,
       jumpDur * 0.15,
-      (v) => { if (player.exists()) player.scaleTo(v) },
+      (v) => {
+        if (player.exists()) {
+          player.scale.x = v
+          player.scale.y = 2 - v
+        }
+      },
       k.easings.easeOutQuad,
     )
 
@@ -317,10 +333,15 @@ export function jumpPlayer(k: KAPLAYCtx, player: GameObj): boolean {
       if (!player.exists()) return
       // Landing squash
       k.tween(
-        k.vec2(0.85, 1.2),
-        k.vec2(1.2, 0.85),
+        0.85,
+        1.2,
         jumpDur * 0.12,
-        (v) => { if (player.exists()) player.scaleTo(v) },
+        (v) => {
+          if (player.exists()) {
+            player.scale.x = v
+            player.scale.y = 2 - v
+          }
+        },
         k.easings.easeOutQuad,
       ).then(() => {
         if (!player.exists()) return
@@ -339,10 +360,15 @@ export function jumpPlayer(k: KAPLAYCtx, player: GameObj): boolean {
         }
         // Return to normal
         k.tween(
-          k.vec2(1.2, 0.85),
-          k.vec2(1, 1),
+          1.2,
+          1,
           jumpDur * 0.16,
-          (v) => { if (player.exists()) player.scaleTo(v) },
+          (v) => {
+            if (player.exists()) {
+              player.scale.x = v
+              player.scale.y = v
+            }
+          },
           k.easings.easeOutBounce,
         )
       })
@@ -375,10 +401,15 @@ export function slidePlayer(k: KAPLAYCtx, player: GameObj): boolean {
 
   // Flatten for slide
   k.tween(
-    k.vec2(1, 1),
-    k.vec2(1.5, 0.45),
+    1,
+    1.5,
     slideDur * 0.15,
-    (v) => { if (player.exists()) player.scaleTo(v) },
+    (v) => {
+      if (player.exists()) {
+        player.scale.x = v
+        player.scale.y = 1 / v
+      }
+    },
     k.easings.easeOutQuad,
   ).then(() => {
     if (!player.exists()) return
@@ -387,18 +418,28 @@ export function slidePlayer(k: KAPLAYCtx, player: GameObj): boolean {
       if (!player.exists()) return
       // Return to normal with bounce
       k.tween(
-        k.vec2(1.5, 0.45),
-        k.vec2(0.9, 1.1),
+        1.5,
+        0.9,
         slideDur * 0.15,
-        (v) => { if (player.exists()) player.scaleTo(v) },
+        (v) => {
+          if (player.exists()) {
+            player.scale.x = v
+            player.scale.y = 1 / v
+          }
+        },
         k.easings.easeOutQuad,
       ).then(() => {
         if (!player.exists()) return
         k.tween(
-          k.vec2(0.9, 1.1),
-          k.vec2(1, 1),
+          0.9,
+          1,
           slideDur * 0.15,
-          (v) => { if (player.exists()) player.scaleTo(v) },
+          (v) => {
+            if (player.exists()) {
+              player.scale.x = v
+              player.scale.y = v
+            }
+          },
           k.easings.easeOutQuad,
         )
       })

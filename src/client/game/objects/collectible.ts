@@ -113,7 +113,8 @@ export function updateCoin(k: KAPLAYCtx, coin: GameObj, speed: number, dt: numbe
 
   coin.pos.x = x
   coin.pos.y = coin.baseY + bobOffset - 20 // Float above ground
-  coin.scaleTo(depthScale * spinScale, depthScale)
+  coin.scale.x = depthScale * spinScale
+  coin.scale.y = depthScale
 
   // Pulsing glow
   if (coin.glowRef && coin.glowRef.exists()) {
@@ -180,17 +181,19 @@ export function createCoinCollectEffect(k: KAPLAYCtx, x: number, y: number, mult
     k.anchor('center'),
     k.color(...C.COIN_GOLD),
     k.opacity(0.6),
+    k.scale(1),
     k.z(140),
   ])
 
   k.tween(
-    { scale: 1, opacity: 0.6 },
-    { scale: 3, opacity: 0 },
+    1,
+    3,
     0.3,
     (v) => {
       if (ring.exists()) {
-        ring.scaleTo(v.scale)
-        ring.opacity = v.opacity
+        ring.scale.x = v
+        ring.scale.y = v
+        ring.opacity = 0.6 * (1 - (v - 1) / 2)
       }
     },
     k.easings.easeOutQuad,
@@ -215,14 +218,14 @@ export function createCoinCollectEffect(k: KAPLAYCtx, x: number, y: number, mult
     0.5,
     1.2,
     0.12,
-    (v) => { if (scoreText.exists()) scoreText.scaleTo(v) },
+    (v) => { if (scoreText.exists()) scoreText.scale.x = scoreText.scale.y = v },
     k.easings.easeOutBack,
   ).then(() => {
     k.tween(
       1.2,
       1,
       0.1,
-      (v) => { if (scoreText.exists()) scoreText.scaleTo(v) },
+      (v) => { if (scoreText.exists()) scoreText.scale.x = scoreText.scale.y = v },
       k.easings.easeOutQuad,
     )
   })
@@ -261,13 +264,24 @@ export function createCoinCollectEffect(k: KAPLAYCtx, x: number, y: number, mult
     ])
 
     k.tween(
-      { y: y - 25, opacity: 1 },
-      { y: y - 55, opacity: 0 },
+      y - 25,
+      y - 55,
       0.4,
       (v) => {
         if (multText.exists()) {
-          multText.pos.y = v.y
-          multText.opacity = v.opacity
+          multText.pos.y = v
+        }
+      },
+      k.easings.easeOutQuad,
+    )
+
+    k.tween(
+      1,
+      0,
+      0.4,
+      (v) => {
+        if (multText.exists()) {
+          multText.opacity = v
         }
       },
       k.easings.easeOutQuad,

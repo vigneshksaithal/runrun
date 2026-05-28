@@ -115,8 +115,14 @@ export function createDeathScene(k: KAPLAYCtx) {
 
       // Slam in animation
       k.tween(2.5, 1, 0.25, (v: number) => {
-        if (title.exists()) title.scaleTo(v)
-        if (titleShadow.exists()) titleShadow.scaleTo(v)
+        if (title.exists()) {
+          title.scale.x = v
+          title.scale.y = v
+        }
+        if (titleShadow.exists()) {
+          titleShadow.scale.x = v
+          titleShadow.scale.y = v
+        }
       }, k.easings.easeOutBack)
       k.tween(0, 1, 0.2, (v: number) => {
         if (title.exists()) title.opacity = v
@@ -165,10 +171,16 @@ export function createDeathScene(k: KAPLAYCtx) {
       // Score pop when finished counting
       k.wait(0.75, () => {
         k.tween(1, 1.15, 0.1, (v: number) => {
-          if (scoreLabel.exists()) scoreLabel.scaleTo(v)
+          if (scoreLabel.exists()) {
+            scoreLabel.scale.x = v
+            scoreLabel.scale.y = v
+          }
         }, k.easings.easeOutQuad).then(() => {
           k.tween(1.15, 1, 0.1, (v: number) => {
-            if (scoreLabel.exists()) scoreLabel.scaleTo(v)
+            if (scoreLabel.exists()) {
+              scoreLabel.scale.x = v
+              scoreLabel.scale.y = v
+            }
           }, k.easings.easeOutQuad)
         })
       })
@@ -186,7 +198,12 @@ export function createDeathScene(k: KAPLAYCtx) {
             k.z(272),
           ])
 
-          k.tween(2, 1, 0.25, (v: number) => { if (badge.exists()) badge.scaleTo(v) }, k.easings.easeOutBack)
+          k.tween(2, 1, 0.25, (v: number) => {
+            if (badge.exists()) {
+              badge.scale.x = v
+              badge.scale.y = v
+            }
+          }, k.easings.easeOutBack)
           k.tween(0, 1, 0.2, (v: number) => { if (badge.exists()) badge.opacity = v })
 
           // Sparkle particles
@@ -245,7 +262,7 @@ export function createDeathScene(k: KAPLAYCtx) {
 
       // === RETRY BUTTON ===
       const retryBtn = k.add([
-        k.rect(200, 64, { radius: 8 }),
+        k.rect(200, 64),
         k.pos(GAME_CONFIG.WIDTH / 2, 560),
         k.anchor('center'),
         k.color(...C.BUTTON_PLAY),
@@ -255,7 +272,7 @@ export function createDeathScene(k: KAPLAYCtx) {
 
       // Button 3D bottom
       retryBtn.add([
-        k.rect(200, 20, { radius: 6 }),
+        k.rect(200, 20),
         k.color(...C.BUTTON_PLAY_DARK),
         k.anchor('bot'),
         k.pos(0, 32),
@@ -274,7 +291,8 @@ export function createDeathScene(k: KAPLAYCtx) {
       retryBtn.onUpdate(() => {
         pulseT += k.dt() * 4
         const s = 1 + Math.sin(pulseT) * 0.05
-        retryBtn.scaleTo(s)
+        retryBtn.scale.x = s
+        retryBtn.scale.y = s
       })
 
       // Hint text
