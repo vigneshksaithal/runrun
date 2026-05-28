@@ -3,87 +3,68 @@ import { GAME_CONFIG } from '../config'
 import { createCoin } from '../objects/collectible'
 import { createObstacle, type ObstacleType } from '../objects/obstacle'
 
-type SpawnType = 'coin' | 'stone_wall' | 'low_beam' | 'pillar'
-
 export function createSpawnerSystem(k: KAPLAYCtx) {
   let spawnTimer = 0
   let coinTimer = 0
   let gameTime = 0
   let currentSpawnInterval = GAME_CONFIG.INITIAL_SPAWN_INTERVAL
-  let lastObstacleLane = -1
+  let lastLane = -1
 
   function getRandomLane(): number {
     return Math.floor(k.rand(0, 3))
   }
 
-  function getObstacleLane(): number {
+  function getDifferentLane(): number {
     let lane = getRandomLane()
-    // Avoid same lane twice in a row (unless no choice)
     let attempts = 0
-    while (lane === lastObstacleLane && attempts < 3) {
+    while (lane === lastLane && attempts < 3) {
       lane = getRandomLane()
       attempts++
     }
-    lastObstacleLane = lane
+    lastLane = lane
     return lane
-  }
-
-  function getSpawnType(): SpawnType {
-    // First 6 seconds: only coins
-    if (gameTime < 6) return 'coin'
-
-    const roll = k.rand(0, 1)
-    if (roll < 0.35) return 'coin'
-    if (roll < 0.6) return 'stone_wall'
-    if (roll < 0.8) return 'low_beam'
-    return 'pillar'
-  }
-
-  function spawnCoinLine(lane: number, count: number) {
-    // Spawn a line of coins at slight delays
-    for (let i = 0; i < count; i++) {
-      k.wait(i * 0.3, () => {
-        createCoin(k, lane)
-      })
-    }
   }
 
   return {
     update(dt: number, speed: number) {
       gameTime += dt
 
-      // Update spawn interval based on time (gets tighter)
       currentSpawnInterval = Math.max(
         GAME_CONFIG.MIN_SPAWN_INTERVAL,
         GAME_CONFIG.INITIAL_SPAWN_INTERVAL - gameTime * 0.01
       )
 
-      // Main spawn timer
+      // Main spawner
       spawnTimer += dt
       if (spawnTimer >= currentSpawnInterval) {
         spawnTimer = 0
 
-        const type = getSpawnType()
-        const lane = type === 'coin' ? getRandomLane() : getObstacleLane()
-
-        if (type === 'coin') {
-          // Sometimes spawn a line of 2-3 coins
-          const lineCount = k.rand(0, 1) < 0.4 ? Math.floor(k.rand(2, 4)) : 1
-          if (lineCount > 1) {
-            spawnCoinLine(lane, lineCount)
-          } else {
-            createCoin(k, lane)
-          }
+        // Early game: more coins
+        if (gameTime < 5) {
+          createCoin(k, getRandomLane())
         } else {
-          createObstacle(k, lane, type as ObstacleType)
+          const roll = k.rand(0, 1)
+          if (roll < 0.35) {
+            // Coin
+            createCoin(k, getRandomLane())
+          } else if (roll < 0.65) {
+            // Train (jump over)
+            createObstacle(k, getDifferentLane(), 'train')
+          } else if (roll < 0.85) {
+            // Barrier (jump over)
+            createObstacle(k, getDifferentLane(), 'barrier')
+          } else {
+            // Low barrier (slide under)
+            createObstacle(k, getDifferentLane(), 'low_barrier')
+          }
         }
       }
 
-      // Extra coin spawning between obstacles
+      // Extra coins
       coinTimer += dt
-      if (coinTimer >= GAME_CONFIG.COIN_SPAWN_INTERVAL && gameTime > 2) {
+      if (coinTimer >= GAME_CONFIG.COIN_SPAWN_INTERVAL && gameTime > 3) {
         coinTimer = 0
-        if (k.rand(0, 1) < 0.5) {
+        if (k.rand(0, 1) < 0.4) {
           createCoin(k, getRandomLane())
         }
       }
@@ -94,7 +75,7 @@ export function createSpawnerSystem(k: KAPLAYCtx) {
       coinTimer = 0
       gameTime = 0
       currentSpawnInterval = GAME_CONFIG.INITIAL_SPAWN_INTERVAL
-      lastObstacleLane = -1
+      lastLane = -1
     },
   }
 }

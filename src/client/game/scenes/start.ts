@@ -5,129 +5,127 @@ const C = GAME_CONFIG.COLORS
 
 export function createStartScene(k: KAPLAYCtx) {
   k.scene('start', () => {
-    // Dark blue-green → emerald gradient background (matching game)
+    // Sky
     k.add([
-      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT / 3),
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT * 0.5),
       k.pos(0, 0),
-      k.color(...C.BG_TOP),
+      k.color(...C.SKY_TOP),
       k.z(0),
     ])
     k.add([
-      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT / 3),
-      k.pos(0, GAME_CONFIG.HEIGHT / 3),
-      k.color(...C.BG_MID),
-      k.z(0),
-    ])
-    k.add([
-      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT / 3),
-      k.pos(0, (GAME_CONFIG.HEIGHT * 2) / 3),
-      k.color(...C.BG_BOTTOM),
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT * 0.5),
+      k.pos(0, GAME_CONFIG.HEIGHT * 0.5),
+      k.color(...C.SKY_BOTTOM),
       k.z(0),
     ])
 
-    // Title glow shadow (green-tinted)
+    // Ground
     k.add([
-      k.text('RUNRUN', { size: 48 }),
-      k.pos(GAME_CONFIG.WIDTH / 2 + 2, 182),
+      k.rect(GAME_CONFIG.WIDTH, 300),
+      k.pos(0, 500),
+      k.color(...C.GROUND),
+      k.z(1),
+    ])
+
+    // Title shadow
+    k.add([
+      k.text('RUNRUN', { size: 52 }),
+      k.pos(GAME_CONFIG.WIDTH / 2 + 3, 153),
       k.anchor('center'),
-      k.color(...C.CRYSTAL_GREEN),
+      k.color(...C.TEXT_SHADOW),
       k.opacity(0.4),
-      k.scale(1),
-      k.z(9),
+      k.z(10),
     ])
 
     // Title
-    k.add([
-      k.text('RUNRUN', { size: 48 }),
-      k.pos(GAME_CONFIG.WIDTH / 2, 180),
+    const title = k.add([
+      k.text('RUNRUN', { size: 52 }),
+      k.pos(GAME_CONFIG.WIDTH / 2, 150),
       k.anchor('center'),
       k.color(...C.TEXT_WHITE),
-      k.scale(1),
-      k.z(10),
+      k.z(11),
     ])
 
-    // Subtitle - bright teal
+    let titleBob = 0
+    title.onUpdate(() => {
+      titleBob += k.dt() * 2
+      title.scale.x = title.scale.y = 1 + Math.sin(titleBob) * 0.03
+    })
+
+    // Subtitle
     k.add([
-      k.text('How far can you run?', { size: 18 }),
-      k.pos(GAME_CONFIG.WIDTH / 2, 230),
+      k.text('Endless Runner', { size: 18 }),
+      k.pos(GAME_CONFIG.WIDTH / 2, 195),
       k.anchor('center'),
-      k.color(80, 220, 200),
+      k.color(...C.SKY_TOP),
       k.z(10),
     ])
 
-    // Bouncing player preview
+    // Simple player preview
     const preview = k.add([
       k.pos(GAME_CONFIG.WIDTH / 2, 380),
       k.anchor('center'),
-      k.scale(1),
-      k.z(10),
+      k.scale(1.5),
+      k.z(20),
     ])
 
-    // Player body preview
     preview.add([
-      k.rect(30, 16),
-      k.color(...C.PLAYER_LEGS),
+      k.rect(30, 25),
+      k.color(...C.PLAYER_PANTS),
       k.anchor('bot'),
-      k.pos(0, 20),
     ])
     preview.add([
-      k.rect(38, 30),
-      k.color(...C.PLAYER_BODY),
+      k.rect(36, 32),
+      k.color(...C.PLAYER_SHIRT),
       k.anchor('bot'),
-      k.pos(0, 4),
+      k.pos(0, -24),
     ])
     preview.add([
-      k.rect(34, 26),
-      k.color(...C.PLAYER_HEAD),
+      k.rect(28, 24),
+      k.color(...C.PLAYER_SKIN),
       k.anchor('bot'),
-      k.pos(0, -26),
+      k.pos(0, -56),
     ])
     preview.add([
-      k.rect(34, 8),
+      k.rect(30, 10),
       k.color(...C.PLAYER_HAIR),
       k.anchor('bot'),
-      k.pos(0, -52),
+      k.pos(0, -80),
     ])
 
-    // Bounce animation
-    let bounceTime = 0
+    let bounce = 0
     preview.onUpdate(() => {
-      bounceTime += k.dt() * 3
-      preview.pos.y = 380 + Math.sin(bounceTime) * 8
+      bounce += k.dt() * 4
+      preview.pos.y = 380 + Math.sin(bounce) * 10
     })
 
-    // PLAY button - bright green
+    // Play button
     const btn = k.add([
-      k.rect(160, 54, { radius: 6 }),
+      k.rect(160, 55),
       k.pos(GAME_CONFIG.WIDTH / 2, 520),
       k.anchor('center'),
-      k.color(...C.BUTTON_GREEN),
-      k.scale(1),
-      k.z(10),
+      k.color(...C.BUTTON),
+      k.z(20),
     ])
 
-    // Button darker bottom
     btn.add([
-      k.rect(160, 18, { radius: 4 }),
-      k.color(...C.BUTTON_GREEN_DARK),
+      k.rect(160, 16),
+      k.color(...C.BUTTON_DARK),
       k.anchor('bot'),
       k.pos(0, 27),
     ])
 
-    // Button text
     btn.add([
       k.text('PLAY', { size: 26 }),
       k.color(...C.TEXT_WHITE),
       k.anchor('center'),
-      k.pos(0, -4),
+      k.pos(0, -3),
     ])
 
-    // Button pulse
-    let pulseTime = 0
+    let btnPulse = 0
     btn.onUpdate(() => {
-      pulseTime += k.dt() * 2
-      const s = 1 + Math.sin(pulseTime) * 0.03
-      btn.scaleTo(s)
+      btnPulse += k.dt() * 3
+      btn.scale.x = btn.scale.y = 1 + Math.sin(btnPulse) * 0.04
     })
 
     // High score
@@ -139,58 +137,33 @@ export function createStartScene(k: KAPLAYCtx) {
 
     if (highScore > 0) {
       k.add([
+        k.rect(140, 36),
+        k.pos(GAME_CONFIG.WIDTH / 2, 600),
+        k.anchor('center'),
+        k.color(0, 0, 0),
+        k.opacity(0.4),
+        k.z(15),
+      ])
+      k.add([
         k.text(`Best: ${highScore}`, { size: 20 }),
-        k.pos(GAME_CONFIG.WIDTH / 2, 590),
+        k.pos(GAME_CONFIG.WIDTH / 2, 600),
         k.anchor('center'),
         k.color(...C.TEXT_GOLD),
-        k.z(10),
+        k.z(16),
       ])
     }
 
-    // Controls hint - teal tinted
+    // Controls hint
     k.add([
       k.text('Swipe or Arrow Keys', { size: 14 }),
       k.pos(GAME_CONFIG.WIDTH / 2, 700),
       k.anchor('center'),
-      k.color(80, 180, 160),
+      k.color(...C.TEXT_WHITE),
+      k.opacity(0.6),
       k.z(10),
     ])
 
-    // Floating particles: mix gold + cyan + green (6 particles)
-    const particleColors: [number, number, number][] = [
-      C.PARTICLE_GOLD,
-      C.PARTICLE_GOLD,
-      [80, 220, 200],
-      [80, 220, 200],
-      C.CRYSTAL_GREEN,
-      C.CRYSTAL_GREEN,
-    ]
-    for (let i = 0; i < 6; i++) {
-      const p = k.add([
-        k.rect(k.rand(3, 5), k.rand(3, 5)),
-        k.pos(k.rand(50, 550), k.rand(100, 750)),
-        k.anchor('center'),
-        k.color(...particleColors[i]),
-        k.opacity(k.rand(0.15, 0.35)),
-        k.z(5),
-      ])
-
-      const startY = p.pos.y
-      const speed = k.rand(0.4, 0.8)
-      const amplitude = k.rand(20, 40)
-      let t = k.rand(0, Math.PI * 2)
-
-      p.onUpdate(() => {
-        t += k.dt() * speed
-        p.pos.y = startY + Math.sin(t) * amplitude
-        p.pos.x += k.dt() * k.rand(-5, 5)
-        // Wrap
-        if (p.pos.y < 50) p.pos.y = 750
-        if (p.pos.y > 760) p.pos.y = 60
-      })
-    }
-
-    // Start game on any input
+    // Start game
     k.onKeyPress(() => k.go('game'))
     k.onMousePress(() => k.go('game'))
     k.onTouchStart(() => k.go('game'))

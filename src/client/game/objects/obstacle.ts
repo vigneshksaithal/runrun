@@ -3,7 +3,7 @@ import { GAME_CONFIG, getLaneXAtDepth, getDepthScale } from '../config'
 
 const C = GAME_CONFIG.COLORS
 
-export type ObstacleType = 'stone_wall' | 'low_beam' | 'pillar'
+export type ObstacleType = 'train' | 'barrier' | 'low_barrier'
 
 export function createObstacle(k: KAPLAYCtx, lane: number, type: ObstacleType): GameObj {
   const startY = GAME_CONFIG.LANE_Y_TOP
@@ -14,165 +14,148 @@ export function createObstacle(k: KAPLAYCtx, lane: number, type: ObstacleType): 
     k.pos(startX, startY),
     k.anchor('bot'),
     k.scale(startScale),
-    k.opacity(1),
+    k.opacity(0),
     k.z(80),
     'obstacle',
     { lane, baseY: startY, obstacleType: type },
   ])
 
-  if (type === 'stone_wall') {
-    createStoneWall(k, obstacle)
-  } else if (type === 'low_beam') {
-    createLowBeam(k, obstacle)
-  } else if (type === 'pillar') {
-    createPillar(k, obstacle)
+  if (type === 'train') {
+    createTrain(k, obstacle)
+  } else if (type === 'barrier') {
+    createBarrier(k, obstacle)
+  } else {
+    createLowBarrier(k, obstacle)
   }
 
   return obstacle
 }
 
-function createStoneWall(k: KAPLAYCtx, parent: GameObj) {
-  // Glow halo (red)
+function createTrain(k: KAPLAYCtx, parent: GameObj) {
+  // Pick random train color
+  const isBlue = k.rand(0, 1) > 0.5
+  const mainColor = isBlue ? C.TRAIN_BLUE : C.TRAIN_RED
+  const darkColor = isBlue ? C.TRAIN_BLUE_DARK : C.TRAIN_RED_DARK
+
+  // Main body
   parent.add([
-    k.rect(68, 63),
-    k.color(...C.OBSTACLE_STONE_GLOW),
-    k.anchor('bot'),
-    k.pos(0, 4),
-    k.opacity(0.2),
-  ])
-  // Main block (60x55)
-  parent.add([
-    k.rect(60, 55),
-    k.color(...C.OBSTACLE_STONE),
+    k.rect(60, 70),
+    k.color(...mainColor),
     k.anchor('bot'),
     k.pos(0, 0),
   ])
 
-  // Horizontal brick line 1
+  // Dark side shading
   parent.add([
-    k.rect(56, 3),
-    k.color(...C.OBSTACLE_STONE_DARK),
-    k.anchor('bot'),
-    k.pos(0, -20),
+    k.rect(12, 68),
+    k.color(...darkColor),
+    k.anchor('botleft'),
+    k.pos(-30, -1),
   ])
 
-  // Horizontal brick line 2
+  // Yellow stripe
   parent.add([
-    k.rect(56, 3),
-    k.color(...C.OBSTACLE_STONE_DARK),
+    k.rect(60, 8),
+    k.color(...C.TRAIN_YELLOW),
     k.anchor('bot'),
-    k.pos(0, -38),
+    k.pos(0, -25),
   ])
 
-  // Vertical line
+  // Windows
+  for (let i = -1; i <= 1; i++) {
+    parent.add([
+      k.rect(14, 16),
+      k.color(...C.TRAIN_WINDOW),
+      k.anchor('center'),
+      k.pos(i * 18, -50),
+    ])
+  }
+
+  // Roof
   parent.add([
-    k.rect(3, 50),
-    k.color(...C.OBSTACLE_STONE_DARK),
+    k.rect(56, 6),
+    k.color(...darkColor),
     k.anchor('bot'),
-    k.pos(10, -3),
+    k.pos(0, -68),
   ])
 }
 
-function createLowBeam(k: KAPLAYCtx, parent: GameObj) {
-  // Glow halo (amber)
+function createBarrier(k: KAPLAYCtx, parent: GameObj) {
+  // Main barrier body
   parent.add([
-    k.rect(78, 22),
-    k.color(...C.OBSTACLE_BEAM_GLOW),
-    k.anchor('bot'),
-    k.pos(0, -38),
-    k.opacity(0.2),
-  ])
-  // Wide bar at top (70x14)
-  parent.add([
-    k.rect(70, 14),
-    k.color(...C.OBSTACLE_BEAM),
-    k.anchor('bot'),
-    k.pos(0, -44),
-  ])
-
-  // Hanging strand 1
-  parent.add([
-    k.rect(3, 12),
-    k.color(...C.OBSTACLE_BEAM_DARK),
-    k.anchor('top'),
-    k.pos(-15, -44),
-  ])
-
-  // Hanging strand 2
-  parent.add([
-    k.rect(3, 10),
-    k.color(...C.OBSTACLE_BEAM_DARK),
-    k.anchor('top'),
-    k.pos(12, -44),
-  ])
-}
-
-function createPillar(k: KAPLAYCtx, parent: GameObj) {
-  // Glow halo (magenta)
-  parent.add([
-    k.rect(52, 63),
-    k.color(...C.OBSTACLE_PILLAR_GLOW),
-    k.anchor('bot'),
-    k.pos(0, 4),
-    k.opacity(0.2),
-  ])
-  // Tall block (44x55)
-  parent.add([
-    k.rect(44, 55),
-    k.color(...C.OBSTACLE_PILLAR),
+    k.rect(50, 50),
+    k.color(...C.BARRIER),
     k.anchor('bot'),
     k.pos(0, 0),
   ])
 
-  // Yellow/black warning stripe (44x10)
+  // Warning stripes
+  for (let i = 0; i < 4; i++) {
+    parent.add([
+      k.rect(46, 6),
+      k.color(...C.BARRIER_STRIPE),
+      k.anchor('center'),
+      k.pos(0, -10 - i * 12),
+    ])
+  }
+}
+
+function createLowBarrier(k: KAPLAYCtx, parent: GameObj) {
+  // Poles
   parent.add([
-    k.rect(44, 10),
-    k.color(...C.OBSTACLE_STRIPE),
+    k.rect(6, 50),
+    k.color(100, 100, 110),
     k.anchor('bot'),
-    k.pos(0, -22),
+    k.pos(-25, 0),
+  ])
+  parent.add([
+    k.rect(6, 50),
+    k.color(100, 100, 110),
+    k.anchor('bot'),
+    k.pos(25, 0),
   ])
 
-  // Dark stripe overlay
+  // Horizontal bar (at slide height)
   parent.add([
-    k.rect(10, 10),
-    k.color(...C.OBSTACLE_STRIPE_DARK),
+    k.rect(56, 10),
+    k.color(...C.BARRIER),
     k.anchor('bot'),
-    k.pos(-12, -22),
+    k.pos(0, -38),
   ])
+
+  // Warning stripes on bar
+  for (let i = 0; i < 4; i++) {
+    parent.add([
+      k.rect(8, 8),
+      k.color(...C.BARRIER_STRIPE),
+      k.anchor('center'),
+      k.pos(-20 + i * 13, -43),
+    ])
+  }
 }
 
 export function updateObstacle(k: KAPLAYCtx, obstacle: GameObj, speed: number, dt: number): boolean {
   if (!obstacle.exists()) return false
 
-  // Move toward player using ROAD_LINE_SPEED_MULT (100)
   const moveSpeed = speed * GAME_CONFIG.ROAD_LINE_SPEED_MULT * dt
   obstacle.baseY += moveSpeed
 
-  // Update position and scale based on depth
   const scale = getDepthScale(obstacle.baseY)
   const x = getLaneXAtDepth(obstacle.lane, obstacle.baseY)
 
   obstacle.pos.x = x
   obstacle.pos.y = obstacle.baseY
-  obstacle.scaleTo(scale)
+  obstacle.scale.x = scale
+  obstacle.scale.y = scale
 
-  // Remove if past bottom
-  return obstacle.baseY > GAME_CONFIG.LANE_Y_BOTTOM + 80
-}
-
-export function createObstacleDestroyEffect(k: KAPLAYCtx, x: number, y: number) {
-  // Reduced to 5 particles (down from 8) using built-in move()
-  for (let i = 0; i < 5; i++) {
-    const angle = (i / 5) * 360
-    k.add([
-      k.rect(k.rand(5, 9), k.rand(5, 9)),
-      k.pos(x, y - 20),
-      k.anchor('center'),
-      k.color(C.PARTICLE_STONE[0], C.PARTICLE_STONE[1], C.PARTICLE_STONE[2]),
-      k.opacity(0.9),
-      k.lifespan(0.3, { fade: 0.2 }),
-      k.move(angle, k.rand(60, 120)),
-      k.z(150),
-    ])
+  // Fade in
+  const fadeStart = GAME_CONFIG.LANE_Y_TOP
+  const fadeEnd = fadeStart + 80
+  if (obstacle.baseY < fadeEnd) {
+    obstacle.opacity = Math.max(0, (obstacle.baseY - fadeStart) / (fadeEnd - fadeStart))
+  } else {
+    obstacle.opacity = 1
   }
+
+  return obstacle.baseY > GAME_CONFIG.LANE_Y_BOTTOM + 80
 }

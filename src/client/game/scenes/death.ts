@@ -1,5 +1,6 @@
 import type { KAPLAYCtx } from 'kaplay'
 import { GAME_CONFIG } from '../config'
+import { createDeathParticles } from '../objects/player'
 
 const C = GAME_CONFIG.COLORS
 
@@ -19,178 +20,213 @@ export function createDeathScene(k: KAPLAYCtx) {
     const px = params?.playerX ?? GAME_CONFIG.VANISHING_POINT_X
     const py = params?.playerY ?? GAME_CONFIG.PLAYER_Y
 
-    // === DEATH VFX (plays on scene entry) ===
-
-    // Screen shake on entry
+    // Effects
     k.shake(12)
+    createDeathParticles(k, px, py)
 
-    // Red flash overlay (fades out quickly)
-    const flash = k.add([
-      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
+    // Background
+    k.add([
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT * 0.5),
       k.pos(0, 0),
-      k.color(220, 40, 40),
-      k.opacity(0.5),
-      k.z(300),
+      k.color(...C.SKY_TOP),
+      k.z(0),
     ])
-    k.tween(
-      0.5,
-      0,
-      0.25,
-      (v: number) => { if (flash.exists()) flash.opacity = v },
-      k.easings.easeOutQuad,
-    )
-    k.wait(0.3, () => { if (flash.exists()) flash.destroy() })
+    k.add([
+      k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT * 0.5),
+      k.pos(0, GAME_CONFIG.HEIGHT * 0.5),
+      k.color(...C.SKY_BOTTOM),
+      k.z(0),
+    ])
+    k.add([
+      k.rect(GAME_CONFIG.WIDTH, 300),
+      k.pos(0, 500),
+      k.color(...C.GROUND),
+      k.z(1),
+    ])
 
-    // Voxel chunk explosion from player position - reduced to 6 particles using built-in move()
-    const chunkColors: [number, number, number][] = [
-      C.PLAYER_BODY, C.PLAYER_HEAD, C.PLAYER_HAIR,
-      C.PLAYER_LEGS, C.PLAYER_BODY, C.PLAYER_HEAD,
-    ]
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * 360
-      const color = chunkColors[i]!
-      k.add([
-        k.rect(k.rand(8, 14), k.rand(8, 14)),
-        k.pos(px, py - 30),
-        k.anchor('center'),
-        k.color(color[0], color[1], color[2]),
-        k.opacity(1),
-        k.z(250),
-        k.lifespan(0.5, { fade: 0.35 }),
-        k.move(angle, k.rand(150, 280)),
-      ])
-    }
-
-    // === DARK OVERLAY (slides in from top) ===
+    // Dark overlay
     const overlay = k.add([
       k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
-      k.pos(0, -GAME_CONFIG.HEIGHT),
-      k.color(10, 16, 14),
-      k.opacity(0.88),
-      k.z(260),
+      k.pos(0, 0),
+      k.color(0, 0, 0),
+      k.opacity(0),
+      k.z(250),
     ])
-    k.tween(
-      -GAME_CONFIG.HEIGHT,
-      0,
-      0.4,
-      (v: number) => { if (overlay.exists()) overlay.pos.y = v },
-      k.easings.easeOutCubic,
-    )
 
-    // === SCORE DISPLAY (appears after overlay lands) ===
-    k.wait(0.45, () => {
-      // GAME OVER title with slam-in
+    k.tween(0, 0.8, 0.4, (v) => {
+      if (overlay.exists()) overlay.opacity = v
+    })
+
+    // UI appears after overlay
+    k.wait(0.4, () => {
+      // Game Over title
       const title = k.add([
-        k.text('GAME OVER', { size: 38 }),
-        k.pos(GAME_CONFIG.WIDTH / 2, 240),
+        k.text('GAME OVER', { size: 42 }),
+        k.pos(GAME_CONFIG.WIDTH / 2, 180),
         k.anchor('center'),
         k.color(...C.TEXT_WHITE),
         k.scale(2),
         k.opacity(0),
-        k.z(270),
+        k.z(260),
       ])
-      k.tween(2, 1, 0.2, (v: number) => { if (title.exists()) title.scaleTo(v) }, k.easings.easeOutQuad)
-      k.tween(0, 1, 0.15, (v: number) => { if (title.exists()) title.opacity = v })
 
-      // Score counter (grows from 0 to final)
+      k.tween(2, 1, 0.2, (v) => {
+        if (title.exists()) {
+          title.scale.x = v
+          title.scale.y = v
+        }
+      }, k.easings.easeOutBack)
+
+      k.tween(0, 1, 0.2, (v) => {
+        if (title.exists()) title.opacity = v
+      })
+
+      // Score panel
+      k.add([
+        k.rect(200, 100),
+        k.pos(GAME_CONFIG.WIDTH / 2, 310),
+        k.anchor('center'),
+        k.color(0, 0, 0),
+        k.opacity(0.5),
+        k.z(260),
+      ])
+
+      k.add([
+        k.text('SCORE', { size: 16 }),
+        k.pos(GAME_CONFIG.WIDTH / 2, 275),
+        k.anchor('center'),
+        k.color(...C.TEXT_WHITE),
+        k.opacity(0.7),
+        k.z(261),
+      ])
+
       const scoreLabel = k.add([
-        k.text('0', { size: 44 }),
+        k.text('0', { size: 48 }),
         k.pos(GAME_CONFIG.WIDTH / 2, 320),
         k.anchor('center'),
         k.color(...C.TEXT_GOLD),
-        k.scale(1),
-        k.z(270),
+        k.z(261),
       ])
-      let displayedScore = 0
-      const scoreSpeed = Math.max(score / 0.6, 50)
+
+      // Animate score counting
+      let displayed = 0
+      const speed = Math.max(score / 0.6, 100)
       scoreLabel.onUpdate(() => {
-        if (displayedScore < score) {
-          displayedScore = Math.min(score, displayedScore + scoreSpeed * k.dt())
-          scoreLabel.text = String(Math.floor(displayedScore))
+        if (displayed < score) {
+          displayed = Math.min(score, displayed + speed * k.dt())
+          scoreLabel.text = String(Math.floor(displayed))
         }
       })
 
-      // NEW BEST badge
+      // New best badge
       if (isNewHigh) {
         k.wait(0.5, () => {
           const badge = k.add([
             k.text('NEW BEST!', { size: 24 }),
-            k.pos(GAME_CONFIG.WIDTH / 2, 375),
+            k.pos(GAME_CONFIG.WIDTH / 2, 380),
             k.anchor('center'),
-            k.color(...C.COMBO_TEXT),
-            k.scale(1.8),
+            k.color(...C.COMBO),
+            k.scale(1.5),
             k.opacity(0),
-            k.z(270),
+            k.z(262),
           ])
-          k.tween(1.8, 1, 0.2, (v: number) => { if (badge.exists()) badge.scaleTo(v) }, k.easings.easeOutQuad)
-          k.tween(0, 1, 0.15, (v: number) => { if (badge.exists()) badge.opacity = v })
+
+          k.tween(1.5, 1, 0.2, (v) => {
+            if (badge.exists()) {
+              badge.scale.x = v
+              badge.scale.y = v
+            }
+          }, k.easings.easeOutBack)
+
+          k.tween(0, 1, 0.2, (v) => {
+            if (badge.exists()) badge.opacity = v
+          })
         })
       }
 
-      // Coins display
+      // Coins collected
       k.add([
-        k.rect(14, 12),
-        k.pos(GAME_CONFIG.WIDTH / 2 - 50, 420),
+        k.rect(90, 36),
+        k.pos(GAME_CONFIG.WIDTH / 2, 440),
         k.anchor('center'),
-        k.color(...C.COIN),
-        k.z(270),
-      ])
-      k.add([
-        k.text(`${coins}`, { size: 22 }),
-        k.pos(GAME_CONFIG.WIDTH / 2 - 25, 420),
-        k.anchor('left'),
-        k.color(...C.TEXT_GOLD),
-        k.z(270),
+        k.color(0, 0, 0),
+        k.opacity(0.4),
+        k.z(260),
       ])
 
-      // === RETRY BUTTON (pulsing) ===
-      const retryBtn = k.add([
-        k.rect(180, 56, { radius: 6 }),
+      k.add([
+        k.circle(12),
+        k.pos(GAME_CONFIG.WIDTH / 2 - 30, 440),
+        k.anchor('center'),
+        k.color(...C.COIN),
+        k.z(261),
+      ])
+
+      k.add([
+        k.text(`${coins}`, { size: 24 }),
+        k.pos(GAME_CONFIG.WIDTH / 2 + 5, 440),
+        k.anchor('center'),
+        k.color(...C.TEXT_GOLD),
+        k.z(261),
+      ])
+
+      // Retry button
+      const btn = k.add([
+        k.rect(180, 55),
         k.pos(GAME_CONFIG.WIDTH / 2, 530),
         k.anchor('center'),
-        k.color(...C.BUTTON_GREEN),
-        k.scale(1),
-        k.z(270),
+        k.color(...C.BUTTON),
+        k.z(262),
       ])
-      retryBtn.add([
-        k.rect(180, 18, { radius: 4 }),
-        k.color(...C.BUTTON_GREEN_DARK),
+
+      btn.add([
+        k.rect(180, 16),
+        k.color(...C.BUTTON_DARK),
         k.anchor('bot'),
-        k.pos(0, 28),
+        k.pos(0, 27),
       ])
-      retryBtn.add([
+
+      btn.add([
         k.text('TAP TO RETRY', { size: 22 }),
         k.color(...C.TEXT_WHITE),
         k.anchor('center'),
-        k.pos(0, -4),
+        k.pos(0, -3),
       ])
 
-      // Pulse animation
-      let pulseT = 0
-      retryBtn.onUpdate(() => {
-        pulseT += k.dt() * 3.5
-        const s = 1 + Math.sin(pulseT) * 0.05
-        retryBtn.scaleTo(s)
+      let pulse = 0
+      btn.onUpdate(() => {
+        pulse += k.dt() * 4
+        btn.scale.x = btn.scale.y = 1 + Math.sin(pulse) * 0.04
       })
 
-      // Restart on input
+      // Restart
       let canRestart = true
       const restart = () => {
-        if (canRestart) {
-          canRestart = false
+        if (!canRestart) return
+        canRestart = false
+
+        const fade = k.add([
+          k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
+          k.pos(0, 0),
+          k.color(0, 0, 0),
+          k.opacity(0),
+          k.z(300),
+        ])
+
+        k.tween(0, 1, 0.2, (v) => {
+          if (fade.exists()) fade.opacity = v
+        }).then(() => {
           k.go('game')
-        }
+        })
       }
+
       k.onKeyPress(restart)
       k.onMousePress(restart)
       k.onTouchStart(restart)
 
-      // Auto-restart after 3s
-      k.wait(3.0, () => {
-        if (canRestart) {
-          canRestart = false
-          k.go('game')
-        }
+      // Auto restart
+      k.wait(3, () => {
+        if (canRestart) restart()
       })
     })
   })

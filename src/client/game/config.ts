@@ -14,102 +14,91 @@ export const GAME_CONFIG = {
   PLAYER_Y: 650,
   PLAYER_WIDTH: 38,
   PLAYER_HEIGHT: 60,
-  LANE_SWITCH_SPEED: 0.25,
+  LANE_SWITCH_SPEED: 0.2,
 
-  // Speed settings - SLOW start, gradual ramp
-  INITIAL_SPEED: 2.8,
-  MAX_SPEED: 7,
+  // Speed settings
+  INITIAL_SPEED: 3,
+  MAX_SPEED: 8,
   SPEED_INCREASE_RATE: 0.02,
 
   // Spawning
-  INITIAL_SPAWN_INTERVAL: 1.4,
-  MIN_SPAWN_INTERVAL: 0.55,
-  COIN_SPAWN_INTERVAL: 0.8,
+  INITIAL_SPAWN_INTERVAL: 1.3,
+  MIN_SPAWN_INTERVAL: 0.5,
+  COIN_SPAWN_INTERVAL: 0.7,
 
   // Scoring
-  SCORE_PER_SECOND: 8,
+  SCORE_PER_SECOND: 10,
   COIN_SCORE: 5,
 
   // Jump / Slide
   JUMP_DURATION: 0.5,
-  SLIDE_DURATION: 0.55,
+  SLIDE_DURATION: 0.5,
 
   // Road animation
-  ROAD_LINE_COUNT: 8,
+  ROAD_LINE_COUNT: 10,
   ROAD_LINE_SPEED_MULT: 100,
 
   // Combo system
   COMBO_THRESHOLD: 5,
   MAX_MULTIPLIER: 5,
 
-  // Colors - Lush Crystal Cavern: vibrant underground world
+  // Modern Subway Surfers-inspired colors - clean and vibrant
   COLORS: {
-    // Background - deep teal/emerald cave sky
-    BG_TOP: [15, 25, 40] as [number, number, number],
-    BG_MID: [20, 35, 50] as [number, number, number],
-    BG_BOTTOM: [25, 45, 55] as [number, number, number],
+    // Sky - bright daytime blue gradient
+    SKY_TOP: [135, 206, 250] as [number, number, number],
+    SKY_BOTTOM: [200, 230, 255] as [number, number, number],
 
-    // Track - dark stone with green tint
-    TRACK_TOP: [30, 40, 38] as [number, number, number],
-    TRACK_BOTTOM: [45, 55, 50] as [number, number, number],
+    // Ground/Track - warm orange-tan like subway surfers
+    GROUND: [230, 180, 140] as [number, number, number],
+    GROUND_DARK: [200, 150, 110] as [number, number, number],
+    TRACK: [180, 140, 100] as [number, number, number],
 
-    // Walls - emerald stone with depth
-    WALL_DARK: [20, 40, 35] as [number, number, number],
-    WALL_MID: [30, 55, 45] as [number, number, number],
-    WALL_LIGHT: [40, 70, 55] as [number, number, number],
-    WALL_ACCENT: [60, 180, 120] as [number, number, number],
+    // Rails - metallic gray
+    RAIL: [120, 125, 130] as [number, number, number],
+    RAIL_SHINE: [180, 185, 190] as [number, number, number],
 
-    // Lane lines - bright cyan (high contrast against dark)
-    LANE_LINE: [80, 220, 200] as [number, number, number],
+    // Lane markers
+    LANE_LINE: [255, 255, 255] as [number, number, number],
 
-    // Player - vibrant and eye-catching
-    PLAYER_BODY: [50, 200, 220] as [number, number, number],
-    PLAYER_HEAD: [230, 185, 155] as [number, number, number],
-    PLAYER_HAIR: [255, 120, 40] as [number, number, number],
-    PLAYER_LEGS: [40, 100, 180] as [number, number, number],
-    PLAYER_EYES: [20, 20, 20] as [number, number, number],
+    // Player - bright blue outfit (Jake style)
+    PLAYER_SHIRT: [50, 150, 250] as [number, number, number],
+    PLAYER_SHIRT_DARK: [30, 120, 200] as [number, number, number],
+    PLAYER_PANTS: [60, 60, 80] as [number, number, number],
+    PLAYER_SKIN: [255, 200, 160] as [number, number, number],
+    PLAYER_HAIR: [80, 50, 30] as [number, number, number],
+    PLAYER_SHOES: [255, 80, 80] as [number, number, number],
 
-    // Coins - BRIGHT saturated gold (maximum visibility)
-    COIN: [255, 200, 0] as [number, number, number],
-    COIN_DARK: [200, 150, 0] as [number, number, number],
-    COIN_SHINE: [255, 255, 180] as [number, number, number],
+    // Coins - shiny gold
+    COIN: [255, 215, 0] as [number, number, number],
+    COIN_SHINE: [255, 250, 150] as [number, number, number],
+    COIN_SHADOW: [200, 160, 0] as [number, number, number],
 
-    // Obstacles - three warm-glow hues by required action
-    OBSTACLE_STONE: [220, 50, 60] as [number, number, number],      // RED = jump over (stone wall)
-    OBSTACLE_STONE_DARK: [160, 30, 40] as [number, number, number],
-    OBSTACLE_STONE_GLOW: [255, 80, 80] as [number, number, number],
-    OBSTACLE_BEAM: [255, 170, 40] as [number, number, number],       // AMBER = slide under (low beam)
-    OBSTACLE_BEAM_DARK: [180, 110, 20] as [number, number, number],
-    OBSTACLE_BEAM_GLOW: [255, 200, 80] as [number, number, number],
-    OBSTACLE_PILLAR: [200, 50, 180] as [number, number, number],     // MAGENTA = dodge sideways (pillar)
-    OBSTACLE_PILLAR_GLOW: [255, 100, 220] as [number, number, number],
-    OBSTACLE_STRIPE: [255, 200, 50] as [number, number, number],
-    OBSTACLE_STRIPE_DARK: [200, 50, 180] as [number, number, number],
+    // Obstacles - train cars (colorful)
+    TRAIN_BLUE: [60, 140, 200] as [number, number, number],
+    TRAIN_BLUE_DARK: [40, 100, 160] as [number, number, number],
+    TRAIN_RED: [220, 80, 80] as [number, number, number],
+    TRAIN_RED_DARK: [180, 50, 50] as [number, number, number],
+    TRAIN_YELLOW: [250, 200, 50] as [number, number, number],
+    TRAIN_WINDOW: [200, 230, 255] as [number, number, number],
 
-    // Torch/lighting
-    TORCH_FLAME: [255, 160, 40] as [number, number, number],
-    TORCH_GLOW: [255, 200, 80] as [number, number, number],
-    TORCH_STICK: [120, 80, 40] as [number, number, number],
+    // Barriers
+    BARRIER: [255, 200, 0] as [number, number, number],
+    BARRIER_STRIPE: [40, 40, 40] as [number, number, number],
 
-    // Crystal accents (scattered in walls)
-    CRYSTAL_BLUE: [100, 180, 255] as [number, number, number],
-    CRYSTAL_PURPLE: [160, 100, 255] as [number, number, number],
-    CRYSTAL_GREEN: [80, 255, 160] as [number, number, number],
+    // Effects
+    DUST: [220, 200, 180] as [number, number, number],
+    SPARK: [255, 255, 200] as [number, number, number],
+    SPEED_LINE: [255, 255, 255] as [number, number, number],
 
-    // Particles / Effects
-    PARTICLE_DUST: [80, 200, 160] as [number, number, number],
-    PARTICLE_GOLD: [255, 220, 80] as [number, number, number],
-    PARTICLE_STONE: [100, 90, 80] as [number, number, number],
-
-    // Speed lines
-    SPEED_LINE: [150, 220, 255] as [number, number, number],
-
-    // UI - clean and bold
+    // UI
     TEXT_WHITE: [255, 255, 255] as [number, number, number],
-    TEXT_GOLD: [255, 210, 0] as [number, number, number],
-    COMBO_TEXT: [80, 255, 180] as [number, number, number],
-    BUTTON_GREEN: [50, 200, 100] as [number, number, number],
-    BUTTON_GREEN_DARK: [35, 150, 70] as [number, number, number],
+    TEXT_GOLD: [255, 215, 0] as [number, number, number],
+    TEXT_SHADOW: [0, 0, 0] as [number, number, number],
+    COMBO: [100, 255, 150] as [number, number, number],
+    BUTTON: [80, 200, 120] as [number, number, number],
+    BUTTON_DARK: [60, 160, 90] as [number, number, number],
+    HEART: [255, 80, 100] as [number, number, number],
+    PANEL: [0, 0, 0] as [number, number, number],
   }
 }
 
@@ -133,4 +122,10 @@ export function getLaneXAtDepth(lane: number, y: number): number {
   const centerX = GAME_CONFIG.VANISHING_POINT_X
   const offset = (lane - 1) * GAME_CONFIG.LANE_WIDTH * scale
   return centerX + offset
+}
+
+// Get track width at depth
+export function getTrackWidthAtDepth(y: number): number {
+  const scale = getDepthScale(y)
+  return GAME_CONFIG.LANE_WIDTH * 3 * scale
 }

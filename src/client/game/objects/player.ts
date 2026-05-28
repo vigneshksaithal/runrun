@@ -13,82 +13,123 @@ export function createPlayer(k: KAPLAYCtx): GameObj {
     'player',
   ])
 
-  // Legs (bottom)
+  // Shadow
   player.add([
-    k.rect(30, 16),
-    k.color(...C.PLAYER_LEGS),
-    k.anchor('bot'),
-    k.pos(0, 0),
+    k.rect(40, 10),
+    k.color(0, 0, 0),
+    k.anchor('center'),
+    k.pos(0, 2),
+    k.opacity(0.25),
   ])
 
-  // Body (teal)
+  // Legs
   player.add([
-    k.rect(38, 30),
-    k.color(...C.PLAYER_BODY),
+    k.rect(12, 20),
+    k.color(...C.PLAYER_PANTS),
     k.anchor('bot'),
-    k.pos(0, -16),
+    k.pos(-7, 0),
+  ])
+  player.add([
+    k.rect(12, 20),
+    k.color(...C.PLAYER_PANTS),
+    k.anchor('bot'),
+    k.pos(7, 0),
   ])
 
-  // Head (skin)
+  // Shoes
+  player.add([
+    k.rect(14, 6),
+    k.color(...C.PLAYER_SHOES),
+    k.anchor('bot'),
+    k.pos(-7, 2),
+  ])
+  player.add([
+    k.rect(14, 6),
+    k.color(...C.PLAYER_SHOES),
+    k.anchor('bot'),
+    k.pos(7, 2),
+  ])
+
+  // Body
+  player.add([
+    k.rect(32, 28),
+    k.color(...C.PLAYER_SHIRT),
+    k.anchor('bot'),
+    k.pos(0, -18),
+  ])
+  // Body shading
+  player.add([
+    k.rect(8, 26),
+    k.color(...C.PLAYER_SHIRT_DARK),
+    k.anchor('botleft'),
+    k.pos(-16, -19),
+  ])
+
+  // Arms
+  player.add([
+    k.rect(8, 22),
+    k.color(...C.PLAYER_SHIRT),
+    k.anchor('top'),
+    k.pos(-18, -44),
+  ])
+  player.add([
+    k.rect(8, 22),
+    k.color(...C.PLAYER_SHIRT),
+    k.anchor('top'),
+    k.pos(18, -44),
+  ])
+
+  // Hands
+  player.add([
+    k.rect(8, 8),
+    k.color(...C.PLAYER_SKIN),
+    k.anchor('top'),
+    k.pos(-18, -24),
+  ])
+  player.add([
+    k.rect(8, 8),
+    k.color(...C.PLAYER_SKIN),
+    k.anchor('top'),
+    k.pos(18, -24),
+  ])
+
+  // Head
   const head = player.add([
-    k.rect(34, 26),
-    k.color(...C.PLAYER_HEAD),
+    k.rect(26, 24),
+    k.color(...C.PLAYER_SKIN),
     k.anchor('bot'),
     k.pos(0, -46),
   ])
 
-  // Hair (brown) on top of head
+  // Hair
   head.add([
-    k.rect(34, 8),
+    k.rect(28, 10),
     k.color(...C.PLAYER_HAIR),
     k.anchor('bot'),
-    k.pos(0, -26),
+    k.pos(0, -24),
   ])
 
-  // Left eye
+  // Eyes
   head.add([
-    k.rect(5, 5),
-    k.color(...C.PLAYER_EYES),
+    k.rect(4, 4),
+    k.color(40, 40, 40),
     k.anchor('center'),
-    k.pos(-8, -10),
+    k.pos(-6, -10),
   ])
-
-  // Right eye
   head.add([
-    k.rect(5, 5),
-    k.color(...C.PLAYER_EYES),
+    k.rect(4, 4),
+    k.color(40, 40, 40),
     k.anchor('center'),
-    k.pos(8, -10),
+    k.pos(6, -10),
   ])
 
-  // Running animation state
+  // Animation
   let runTime = 0
-  let trailTimer = 0
 
-  // Single unified update handler for all player updates
   player.onUpdate(() => {
     if (!player.exists()) return
-    
-    const dt = k.dt()
-    
-    // Head bob animation
-    runTime += dt * 6
-    head.pos.y = -46 + Math.sin(runTime) * 2
-    
-    // Trail particles (reduced frequency: 0.2s instead of 0.15s)
-    trailTimer += dt
-    if (trailTimer >= 0.2) {
-      trailTimer = 0
-      k.add([
-        k.rect(6, 6),
-        k.pos(player.pos.x + k.rand(-8, 8), player.pos.y - 4),
-        k.anchor('center'),
-        k.color(...C.PARTICLE_DUST),
-        k.opacity(0.5),
-        k.lifespan(0.25, { fade: 0.15 }),
-        k.z(50),
-      ])
-    }
+    runTime += k.dt() * 8
+    head.pos.y = -46 + Math.sin(runTime) * 1.5
   })
 
   return player
@@ -98,34 +139,39 @@ export function jumpPlayer(k: KAPLAYCtx, player: GameObj): boolean {
   if (!player.exists()) return false
 
   const jumpDur = GAME_CONFIG.JUMP_DURATION
+  const startY = player.pos.y
+  const jumpHeight = 70
 
-  // Squash before jump
+  // Jump arc
   k.tween(
-    k.vec2(1, 1),
-    k.vec2(0.8, 1.3),
-    jumpDur * 0.2,
-    (v) => { if (player.exists()) player.scaleTo(v) },
-    k.easings.easeOutQuad,
+    0,
+    1,
+    jumpDur,
+    (t) => {
+      if (player.exists()) {
+        const arc = Math.sin(t * Math.PI)
+        player.pos.y = startY - jumpHeight * arc
+
+        // Squash/stretch
+        if (t < 0.2) {
+          player.scale.x = 1 + t * 0.5
+          player.scale.y = 1 - t * 0.3
+        } else if (t > 0.8) {
+          const land = (t - 0.8) / 0.2
+          player.scale.x = 1.1 - land * 0.1
+          player.scale.y = 0.94 + land * 0.06
+        } else {
+          player.scale.x = 0.9
+          player.scale.y = 1.1
+        }
+      }
+    },
+    k.easings.linear,
   ).then(() => {
-    if (!player.exists()) return
-    // Stretch up
-    k.tween(
-      k.vec2(0.8, 1.3),
-      k.vec2(1.1, 0.9),
-      jumpDur * 0.5,
-      (v) => { if (player.exists()) player.scaleTo(v) },
-      k.easings.easeOutQuad,
-    ).then(() => {
-      if (!player.exists()) return
-      // Return to normal
-      k.tween(
-        k.vec2(1.1, 0.9),
-        k.vec2(1, 1),
-        jumpDur * 0.3,
-        (v) => { if (player.exists()) player.scaleTo(v) },
-        k.easings.easeOutBounce,
-      )
-    })
+    if (player.exists()) {
+      player.scale.x = 1
+      player.scale.y = 1
+    }
   })
 
   return true
@@ -136,27 +182,31 @@ export function slidePlayer(k: KAPLAYCtx, player: GameObj): boolean {
 
   const slideDur = GAME_CONFIG.SLIDE_DURATION
 
-  // Flatten for slide
   k.tween(
-    k.vec2(1, 1),
-    k.vec2(1.4, 0.5),
-    slideDur * 0.2,
-    (v) => { if (player.exists()) player.scaleTo(v) },
-    k.easings.easeOutQuad,
+    0,
+    1,
+    slideDur,
+    (t) => {
+      if (player.exists()) {
+        if (t < 0.2) {
+          player.scale.x = 1 + t * 2
+          player.scale.y = 1 - t * 2.5
+        } else if (t > 0.8) {
+          const up = (t - 0.8) / 0.2
+          player.scale.x = 1.4 - up * 0.4
+          player.scale.y = 0.5 + up * 0.5
+        } else {
+          player.scale.x = 1.4
+          player.scale.y = 0.5
+        }
+      }
+    },
+    k.easings.linear,
   ).then(() => {
-    if (!player.exists()) return
-    // Hold flat
-    k.wait(slideDur * 0.5, () => {
-      if (!player.exists()) return
-      // Return to normal
-      k.tween(
-        k.vec2(1.4, 0.5),
-        k.vec2(1, 1),
-        slideDur * 0.3,
-        (v) => { if (player.exists()) player.scaleTo(v) },
-        k.easings.easeOutQuad,
-      )
-    })
+    if (player.exists()) {
+      player.scale.x = 1
+      player.scale.y = 1
+    }
   })
 
   return true
@@ -164,24 +214,23 @@ export function slidePlayer(k: KAPLAYCtx, player: GameObj): boolean {
 
 export function createDeathParticles(k: KAPLAYCtx, x: number, y: number) {
   const colors: [number, number, number][] = [
-    C.PLAYER_BODY,
-    C.PLAYER_HEAD,
-    C.PLAYER_HAIR,
-    C.PLAYER_LEGS,
+    C.PLAYER_SHIRT,
+    C.PLAYER_SKIN,
+    C.PLAYER_PANTS,
+    C.PLAYER_SHOES,
   ]
 
-  // Reduced to 8 particles (down from 12) using built-in move()
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * 360
+  for (let i = 0; i < 10; i++) {
+    const angle = (i / 10) * 360
     const color = colors[i % colors.length]!
 
     k.add([
-      k.rect(k.rand(6, 12), k.rand(6, 12)),
-      k.pos(x, y - 30),
+      k.rect(k.rand(8, 14), k.rand(8, 14)),
+      k.pos(x, y - 35),
       k.anchor('center'),
       k.color(color[0], color[1], color[2]),
       k.opacity(1),
-      k.lifespan(0.35, { fade: 0.25 }),
+      k.lifespan(0.5, { fade: 0.3 }),
       k.move(angle, k.rand(150, 300)),
       k.z(200),
     ])

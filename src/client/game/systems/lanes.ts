@@ -1,14 +1,14 @@
 import { GAME_CONFIG, getLaneX } from '../config'
 
 export function createLaneSystem() {
-  let currentLane = 1 // 0=left, 1=center, 2=right
+  let currentLane = 1
   let targetX = getLaneX(currentLane)
   let currentX = targetX
   let tiltAngle = 0
-  let isMoving = false
 
-  const TILT_MAX = 15 // degrees
-  const TILT_DECAY = 8 // speed of tilt return to 0
+  const TILT_MAX = 12
+  const TILT_DECAY = 8
+  const MOVE_SPEED = 14
 
   return {
     getCurrentLane(): number {
@@ -24,7 +24,7 @@ export function createLaneSystem() {
     },
 
     isLaneChanging(): boolean {
-      return isMoving
+      return Math.abs(currentX - targetX) > 2
     },
 
     moveLeft(): boolean {
@@ -32,7 +32,6 @@ export function createLaneSystem() {
         currentLane--
         targetX = getLaneX(currentLane)
         tiltAngle = -TILT_MAX
-        isMoving = true
         return true
       }
       return false
@@ -43,29 +42,25 @@ export function createLaneSystem() {
         currentLane++
         targetX = getLaneX(currentLane)
         tiltAngle = TILT_MAX
-        isMoving = true
         return true
       }
       return false
     },
 
     update(dt: number) {
-      // Clamp dt to prevent physics explosions on tab switch/lag spikes
       const clampedDt = Math.min(dt, 0.05)
-      
-      // Smooth lerp to target lane using proper exponential smoothing
-      // Formula: current = current + (target - current) * (1 - e^(-speed * dt))
-      const lerpFactor = 1 - Math.exp(-12 * clampedDt)
-      const diff = targetX - currentX
-      currentX += diff * lerpFactor
 
-      // Snap when very close
-      if (Math.abs(diff) < 0.5) {
+      // Smooth movement
+      const diff = targetX - currentX
+      const lerp = 1 - Math.exp(-MOVE_SPEED * clampedDt)
+      currentX += diff * lerp
+
+      // Snap when close
+      if (Math.abs(diff) < 1) {
         currentX = targetX
-        isMoving = false
       }
 
-      // Decay tilt back to 0 using exponential decay
+      // Tilt decay
       if (Math.abs(tiltAngle) > 0.5) {
         tiltAngle *= Math.exp(-TILT_DECAY * clampedDt)
       } else {
@@ -78,7 +73,6 @@ export function createLaneSystem() {
       targetX = getLaneX(1)
       currentX = targetX
       tiltAngle = 0
-      isMoving = false
     }
   }
 }

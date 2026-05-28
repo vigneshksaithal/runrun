@@ -12,34 +12,33 @@ export function createCoin(k: KAPLAYCtx, lane: number): GameObj {
     k.pos(startX, startY),
     k.anchor('center'),
     k.scale(startScale),
-    k.opacity(1),
+    k.opacity(0),
     k.z(80),
     'coin',
-    { lane, baseY: startY, bobTime: 0 },
+    { lane, baseY: startY, spinTime: k.rand(0, Math.PI * 2) },
   ])
 
-  // Main gold body (ingot shape)
+  // Main coin body
   coin.add([
-    k.rect(22, 16),
+    k.circle(14),
     k.color(...C.COIN),
     k.anchor('center'),
-    k.pos(0, 0),
   ])
 
-  // Darker gold bottom (depth)
+  // Inner ring
   coin.add([
-    k.rect(22, 6),
-    k.color(...C.COIN_DARK),
+    k.circle(10),
+    k.color(...C.COIN_SHADOW),
     k.anchor('center'),
-    k.pos(0, 5),
+    k.opacity(0.4),
   ])
 
-  // White shine square
+  // Shine
   coin.add([
-    k.rect(4, 4),
+    k.circle(4),
     k.color(...C.COIN_SHINE),
     k.anchor('center'),
-    k.pos(-6, -4),
+    k.pos(-4, -4),
   ])
 
   return coin
@@ -48,52 +47,67 @@ export function createCoin(k: KAPLAYCtx, lane: number): GameObj {
 export function updateCoin(k: KAPLAYCtx, coin: GameObj, speed: number, dt: number): boolean {
   if (!coin.exists()) return false
 
-  // Move toward player
   const moveSpeed = speed * GAME_CONFIG.ROAD_LINE_SPEED_MULT * dt
   coin.baseY += moveSpeed
 
-  // Bob animation (±6px)
-  coin.bobTime += dt * 4
-  const bobOffset = Math.sin(coin.bobTime) * 6
+  // Spin animation
+  coin.spinTime += dt * 6
+  const spinScale = 0.5 + Math.abs(Math.cos(coin.spinTime)) * 0.5
 
-  // Update position and scale based on depth
-  const scale = getDepthScale(coin.baseY)
+  const depthScale = getDepthScale(coin.baseY)
   const x = getLaneXAtDepth(coin.lane, coin.baseY)
 
   coin.pos.x = x
-  coin.pos.y = coin.baseY + bobOffset
-  coin.scaleTo(scale)
+  coin.pos.y = coin.baseY - 15 // Float above ground
+  coin.scale.x = depthScale * spinScale
+  coin.scale.y = depthScale
 
-  // Remove if past bottom
-  return coin.baseY > GAME_CONFIG.LANE_Y_BOTTOM + 50
+  // Fade in
+  const fadeStart = GAME_CONFIG.LANE_Y_TOP
+  const fadeEnd = fadeStart + 60
+  if (coin.baseY < fadeEnd) {
+    coin.opacity = Math.max(0, (coin.baseY - fadeStart) / (fadeEnd - fadeStart))
+  } else {
+    coin.opacity = 1
+  }
+
+  return coin.baseY > GAME_CONFIG.LANE_Y_BOTTOM + 40
 }
 
 export function createCoinCollectEffect(k: KAPLAYCtx, x: number, y: number, multiplier: number = 1) {
-  // Reduced to 4 particles (down from 6) using built-in move() instead of manual updates
-  for (let i = 0; i < 4; i++) {
-    const angle = (i / 4) * 360
+  // Gold particles
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * 360
     k.add([
       k.rect(6, 6),
       k.pos(x, y),
       k.anchor('center'),
-      k.color(...C.PARTICLE_GOLD),
-      k.opacity(0.9),
-      k.lifespan(0.25, { fade: 0.15 }),
+      k.color(...C.COIN),
+      k.opacity(1),
+      k.lifespan(0.3, { fade: 0.2 }),
       k.move(angle, k.rand(80, 150)),
       k.z(150),
     ])
   }
 
-  // "+N" text - simplified animation using built-in move()
-  const pointValue = GAME_CONFIG.COIN_SCORE * multiplier
-  k.add([
-    k.text(`+${pointValue}`, { size: 18 }),
+  // Score popup
+  const points = GAME_CONFIG.COIN_SCORE * multiplier
+  const popup = k.add([
+    k.text(`+${points}`, { size: 20 }),
     k.pos(x, y - 10),
     k.anchor('center'),
     k.color(...C.TEXT_GOLD),
     k.opacity(1),
-    k.lifespan(0.35, { fade: 0.2 }),
-    k.move(k.Vec2.UP, 80),
     k.z(160),
   ])
+
+  k.tween(y - 10, y - 50, 0.4, (v) => {
+    if (popup.exists()) popup.pos.y = v
+  }, k.easings.easeOutQuad)
+
+  k.tween(1, 0, 0.4, (v) => {
+    if (popup.exists()) popup.opacity = v
+  }, k.easings.easeOutQuad).then(() => {
+    if (popup.exists()) popup.destroy()
+  })
 }
