@@ -13,11 +13,7 @@ const k = kaplay({
   letterbox: true,
   crisp: false, // Disable crisp for smoother, anti-aliased graphics
   touchToMouse: true,
-  canvas: document.createElement('canvas'),
 })
-
-// Append canvas to body
-document.body.appendChild(k.canvas)
 
 // Register scenes
 createStartScene(k)
