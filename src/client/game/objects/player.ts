@@ -15,11 +15,11 @@ export function createPlayer(k: KAPLAYCtx): GameObj {
 
   // Shadow
   player.add([
-    k.ellipse(20, 8),
+    k.rect(40, 10),
     k.color(0, 0, 0),
     k.anchor('center'),
     k.pos(0, 2),
-    k.opacity(0.3),
+    k.opacity(0.25),
   ])
 
   // Legs

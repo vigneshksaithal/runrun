@@ -157,7 +157,7 @@ export function createGameScene(k: KAPLAYCtx) {
     ])
 
     k.add([
-      k.ellipse(10, 10),
+      k.circle(10),
       k.pos(22, 30),
       k.anchor('center'),
       k.color(...C.COIN),

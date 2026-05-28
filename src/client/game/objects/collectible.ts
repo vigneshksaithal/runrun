@@ -20,14 +20,14 @@ export function createCoin(k: KAPLAYCtx, lane: number): GameObj {
 
   // Main coin body
   coin.add([
-    k.ellipse(14, 14),
+    k.circle(14),
     k.color(...C.COIN),
     k.anchor('center'),
   ])
 
   // Inner ring
   coin.add([
-    k.ellipse(10, 10),
+    k.circle(10),
     k.color(...C.COIN_SHADOW),
     k.anchor('center'),
     k.opacity(0.4),
@@ -35,7 +35,7 @@ export function createCoin(k: KAPLAYCtx, lane: number): GameObj {
 
   // Shine
   coin.add([
-    k.ellipse(4, 4),
+    k.circle(4),
     k.color(...C.COIN_SHINE),
     k.anchor('center'),
     k.pos(-4, -4),

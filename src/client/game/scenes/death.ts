@@ -155,7 +155,7 @@ export function createDeathScene(k: KAPLAYCtx) {
       ])
 
       k.add([
-        k.ellipse(12, 12),
+        k.circle(12),
         k.pos(GAME_CONFIG.WIDTH / 2 - 30, 440),
         k.anchor('center'),
         k.color(...C.COIN),
