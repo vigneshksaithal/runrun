@@ -15,37 +15,20 @@ export function createCoin(k: KAPLAYCtx, lane: number): GameObj {
     k.opacity(1),
     k.z(80),
     'coin',
-    { lane, baseY: startY, bobTime: 0 },
+    { lane, baseY: startY, bobTime: k.rand(0, Math.PI * 2) },
   ])
 
-  // Main gold body (ingot shape)
-  coin.add([
-    k.rect(22, 16),
-    k.color(...C.COIN),
-    k.anchor('center'),
-    k.pos(0, 0),
-  ])
-
-  // Darker gold bottom (depth)
-  coin.add([
-    k.rect(22, 6),
-    k.color(...C.COIN_DARK),
-    k.anchor('center'),
-    k.pos(0, 5),
-  ])
-
-  // White shine square
-  coin.add([
-    k.rect(4, 4),
-    k.color(...C.COIN_SHINE),
-    k.anchor('center'),
-    k.pos(-6, -4),
-  ])
+  // Round gold coin: dark rim, gold body, lighter inner disc, shine
+  coin.add([k.circle(13), k.anchor('center'), k.pos(0, 0), k.color(...C.COIN), k.outline(3, k.rgb(...C.COIN_DARK))])
+  coin.add([k.circle(8.5), k.anchor('center'), k.pos(0, 0), k.color(...C.COIN_LIGHT)])
+  coin.add([k.circle(4), k.anchor('center'), k.pos(0, 0), k.color(...C.COIN)])
+  // Shine highlight
+  coin.add([k.circle(2.6), k.anchor('center'), k.pos(-4.5, -4.5), k.color(...C.COIN_SHINE)])
 
   return coin
 }
 
-export function updateCoin(k: KAPLAYCtx, coin: GameObj, speed: number, dt: number): boolean {
+export function updateCoin(_k: KAPLAYCtx, coin: GameObj, speed: number, dt: number): boolean {
   if (!coin.exists()) return false
 
   // Move toward player
@@ -69,22 +52,21 @@ export function updateCoin(k: KAPLAYCtx, coin: GameObj, speed: number, dt: numbe
 }
 
 export function createCoinCollectEffect(k: KAPLAYCtx, x: number, y: number, multiplier: number = 1) {
-  // Reduced to 4 particles (down from 6) using built-in move() instead of manual updates
   for (let i = 0; i < 4; i++) {
     const angle = (i / 4) * 360
     k.add([
-      k.rect(6, 6),
+      k.circle(k.rand(3, 5)),
       k.pos(x, y),
       k.anchor('center'),
-      k.color(...C.PARTICLE_GOLD),
-      k.opacity(0.9),
+      k.color(...C.GOLD_SPARK),
+      k.opacity(0.95),
       k.lifespan(0.25, { fade: 0.15 }),
       k.move(angle, k.rand(80, 150)),
       k.z(150),
     ])
   }
 
-  // "+N" text - simplified animation using built-in move()
+  // "+N" text floating up
   const pointValue = GAME_CONFIG.COIN_SCORE * multiplier
   k.add([
     k.text(`+${pointValue}`, { size: 18 }),

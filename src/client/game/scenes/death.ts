@@ -20,8 +20,6 @@ export function createDeathScene(k: KAPLAYCtx) {
     const py = params?.playerY ?? GAME_CONFIG.PLAYER_Y
 
     // === DEATH VFX (plays on scene entry) ===
-
-    // Screen shake on entry
     k.shake(12)
 
     // Red flash overlay (fades out quickly)
@@ -32,19 +30,13 @@ export function createDeathScene(k: KAPLAYCtx) {
       k.opacity(0.5),
       k.z(300),
     ])
-    k.tween(
-      0.5,
-      0,
-      0.25,
-      (v: number) => { if (flash.exists()) flash.opacity = v },
-      k.easings.easeOutQuad,
-    )
+    k.tween(0.5, 0, 0.25, (v: number) => { if (flash.exists()) flash.opacity = v }, k.easings.easeOutQuad)
     k.wait(0.3, () => { if (flash.exists()) flash.destroy() })
 
-    // Voxel chunk explosion from player position - reduced to 6 particles using built-in move()
+    // Chunk explosion from player position (player colors)
     const chunkColors: [number, number, number][] = [
-      C.PLAYER_BODY, C.PLAYER_HEAD, C.PLAYER_HAIR,
-      C.PLAYER_LEGS, C.PLAYER_BODY, C.PLAYER_HEAD,
+      C.HOODIE, C.CAP, C.JEANS,
+      C.SHOE, C.BACKPACK, C.HOODIE,
     ]
     for (let i = 0; i < 6; i++) {
       const angle = (i / 6) * 360
@@ -61,12 +53,12 @@ export function createDeathScene(k: KAPLAYCtx) {
       ])
     }
 
-    // === DARK OVERLAY (slides in from top) ===
+    // === DARK PANEL (slides in from top) ===
     const overlay = k.add([
       k.rect(GAME_CONFIG.WIDTH, GAME_CONFIG.HEIGHT),
       k.pos(0, -GAME_CONFIG.HEIGHT),
-      k.color(10, 16, 14),
-      k.opacity(0.88),
+      k.color(...C.PANEL),
+      k.opacity(0.9),
       k.z(260),
     ])
     k.tween(
@@ -79,9 +71,8 @@ export function createDeathScene(k: KAPLAYCtx) {
 
     // === SCORE DISPLAY (appears after overlay lands) ===
     k.wait(0.45, () => {
-      // GAME OVER title with slam-in
       const title = k.add([
-        k.text('GAME OVER', { size: 38 }),
+        k.text('GAME OVER', { size: 40 }),
         k.pos(GAME_CONFIG.WIDTH / 2, 240),
         k.anchor('center'),
         k.color(...C.TEXT_WHITE),
@@ -92,13 +83,11 @@ export function createDeathScene(k: KAPLAYCtx) {
       k.tween(2, 1, 0.2, (v: number) => { if (title.exists()) title.scaleTo(v) }, k.easings.easeOutQuad)
       k.tween(0, 1, 0.15, (v: number) => { if (title.exists()) title.opacity = v })
 
-      // Score counter (grows from 0 to final)
       const scoreLabel = k.add([
-        k.text('0', { size: 44 }),
+        k.text('0', { size: 46 }),
         k.pos(GAME_CONFIG.WIDTH / 2, 320),
         k.anchor('center'),
         k.color(...C.TEXT_GOLD),
-        k.scale(1),
         k.z(270),
       ])
       let displayedScore = 0
@@ -110,7 +99,6 @@ export function createDeathScene(k: KAPLAYCtx) {
         }
       })
 
-      // NEW BEST badge
       if (isNewHigh) {
         k.wait(0.5, () => {
           const badge = k.add([
@@ -129,15 +117,16 @@ export function createDeathScene(k: KAPLAYCtx) {
 
       // Coins display
       k.add([
-        k.rect(14, 12),
-        k.pos(GAME_CONFIG.WIDTH / 2 - 50, 420),
+        k.circle(10),
+        k.pos(GAME_CONFIG.WIDTH / 2 - 50, 422),
         k.anchor('center'),
         k.color(...C.COIN),
+        k.outline(2, k.rgb(...C.COIN_DARK)),
         k.z(270),
       ])
       k.add([
         k.text(`${coins}`, { size: 22 }),
-        k.pos(GAME_CONFIG.WIDTH / 2 - 25, 420),
+        k.pos(GAME_CONFIG.WIDTH / 2 - 28, 420),
         k.anchor('left'),
         k.color(...C.TEXT_GOLD),
         k.z(270),
@@ -145,35 +134,22 @@ export function createDeathScene(k: KAPLAYCtx) {
 
       // === RETRY BUTTON (pulsing) ===
       const retryBtn = k.add([
-        k.rect(180, 56, { radius: 6 }),
+        k.rect(190, 58, { radius: 12 }),
         k.pos(GAME_CONFIG.WIDTH / 2, 530),
         k.anchor('center'),
         k.color(...C.BUTTON_GREEN),
         k.scale(1),
         k.z(270),
       ])
-      retryBtn.add([
-        k.rect(180, 18, { radius: 4 }),
-        k.color(...C.BUTTON_GREEN_DARK),
-        k.anchor('bot'),
-        k.pos(0, 28),
-      ])
-      retryBtn.add([
-        k.text('TAP TO RETRY', { size: 22 }),
-        k.color(...C.TEXT_WHITE),
-        k.anchor('center'),
-        k.pos(0, -4),
-      ])
+      retryBtn.add([k.rect(190, 18, { radius: 8 }), k.color(...C.BUTTON_GREEN_DARK), k.anchor('bot'), k.pos(0, 29)])
+      retryBtn.add([k.text('TAP TO RETRY', { size: 22 }), k.color(...C.TEXT_WHITE), k.anchor('center'), k.pos(0, -4)])
 
-      // Pulse animation
       let pulseT = 0
       retryBtn.onUpdate(() => {
         pulseT += k.dt() * 3.5
-        const s = 1 + Math.sin(pulseT) * 0.05
-        retryBtn.scaleTo(s)
+        retryBtn.scaleTo(1 + Math.sin(pulseT) * 0.05)
       })
 
-      // Restart on input
       let canRestart = true
       const restart = () => {
         if (canRestart) {
@@ -185,7 +161,6 @@ export function createDeathScene(k: KAPLAYCtx) {
       k.onMousePress(restart)
       k.onTouchStart(restart)
 
-      // Auto-restart after 3s
       k.wait(3.0, () => {
         if (canRestart) {
           canRestart = false

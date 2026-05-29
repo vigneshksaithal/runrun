@@ -27,7 +27,7 @@
 		.preview-container {
 			width: 100%;
 			height: 100%;
-			background: linear-gradient(180deg, #0f1928 0%, #142332 40%, #1a3040 100%);
+			background: linear-gradient(180deg, #40aafa 0%, #78c8fc 55%, #c4eafc 72%, #68c458 72%, #4ea546 100%);
 			display: flex;
 			flex-direction: column;
 			align-items: center;
@@ -37,295 +37,216 @@
 			cursor: pointer;
 		}
 
-		/* Animated background elements */
 		.bg-layer {
 			position: absolute;
 			inset: 0;
 			pointer-events: none;
 		}
 
-		/* Floating crystals */
-		.crystal {
+		/* Sun */
+		.sun {
 			position: absolute;
-			border-radius: 2px;
-			animation: float 4s ease-in-out infinite;
-		}
-
-		.crystal-1 {
-			width: 12px;
-			height: 28px;
-			background: linear-gradient(135deg, #64b4ff 0%, #4a8acc 100%);
-			left: 8%;
-			top: 25%;
-			animation-delay: 0s;
-			box-shadow: 0 0 20px rgba(100, 180, 255, 0.4);
-		}
-
-		.crystal-2 {
-			width: 10px;
-			height: 22px;
-			background: linear-gradient(135deg, #a064ff 0%, #7844cc 100%);
 			right: 12%;
-			top: 35%;
-			animation-delay: 1s;
-			box-shadow: 0 0 18px rgba(160, 100, 255, 0.4);
-		}
-
-		.crystal-3 {
-			width: 14px;
-			height: 32px;
-			background: linear-gradient(135deg, #50ffa0 0%, #30cc70 100%);
-			left: 15%;
-			bottom: 30%;
-			animation-delay: 2s;
-			box-shadow: 0 0 22px rgba(80, 255, 160, 0.4);
-		}
-
-		.crystal-4 {
-			width: 8px;
-			height: 18px;
-			background: linear-gradient(135deg, #64b4ff 0%, #4a8acc 100%);
-			right: 18%;
-			bottom: 25%;
-			animation-delay: 0.5s;
-			box-shadow: 0 0 15px rgba(100, 180, 255, 0.4);
-		}
-
-		.crystal-5 {
-			width: 10px;
-			height: 24px;
-			background: linear-gradient(135deg, #50ffa0 0%, #30cc70 100%);
-			right: 8%;
-			top: 60%;
-			animation-delay: 1.5s;
-			box-shadow: 0 0 18px rgba(80, 255, 160, 0.4);
-		}
-
-		@keyframes float {
-
-			0%,
-			100% {
-				transform: translateY(0) rotate(-5deg);
-			}
-
-			50% {
-				transform: translateY(-15px) rotate(5deg);
-			}
-		}
-
-		/* Dust particles */
-		.particle {
-			position: absolute;
-			width: 4px;
-			height: 4px;
-			background: rgba(80, 200, 160, 0.3);
+			top: 8%;
+			width: 70px;
+			height: 70px;
 			border-radius: 50%;
-			animation: drift 8s linear infinite;
+			background: radial-gradient(circle, #fffce6 55%, #fff0aa 100%);
+			box-shadow: 0 0 50px 20px rgba(255, 240, 170, 0.5);
 		}
 
-		.particle:nth-child(1) {
-			left: 20%;
-			animation-delay: 0s;
+		/* Clouds */
+		.cloud {
+			position: absolute;
+			background: #ffffff;
+			border-radius: 50px;
+			opacity: 0.95;
+			animation: drift 18s linear infinite;
 		}
-
-		.particle:nth-child(2) {
-			left: 40%;
-			animation-delay: 2s;
+		.cloud::before,
+		.cloud::after {
+			content: '';
+			position: absolute;
+			background: #ffffff;
+			border-radius: 50%;
 		}
-
-		.particle:nth-child(3) {
-			left: 60%;
-			animation-delay: 4s;
-		}
-
-		.particle:nth-child(4) {
-			left: 80%;
-			animation-delay: 6s;
-		}
+		.cloud-1 { width: 70px; height: 22px; left: 12%; top: 18%; }
+		.cloud-1::before { width: 34px; height: 34px; top: -16px; left: 10px; }
+		.cloud-1::after { width: 26px; height: 26px; top: -12px; right: 12px; }
+		.cloud-2 { width: 54px; height: 18px; left: 60%; top: 30%; animation-delay: 6s; }
+		.cloud-2::before { width: 26px; height: 26px; top: -12px; left: 8px; }
+		.cloud-2::after { width: 20px; height: 20px; top: -9px; right: 8px; }
 
 		@keyframes drift {
-			0% {
-				transform: translateY(100vh) scale(0.5);
-				opacity: 0;
-			}
-
-			10% {
-				opacity: 0.6;
-			}
-
-			90% {
-				opacity: 0.6;
-			}
-
-			100% {
-				transform: translateY(-20px) scale(1);
-				opacity: 0;
-			}
+			0% { transform: translateX(-40px); }
+			100% { transform: translateX(420px); }
 		}
 
-		/* Main content */
+		/* Palm trees */
+		.palm {
+			position: absolute;
+			bottom: 24%;
+			width: 60px;
+			height: 120px;
+		}
+		.palm-left { left: 4%; }
+		.palm-right { right: 4%; transform: scaleX(-1); }
+		.palm-trunk {
+			position: absolute;
+			bottom: 0;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 12px;
+			height: 90px;
+			background: linear-gradient(90deg, #8a5e38 0%, #6e4a2c 100%);
+			border-radius: 6px;
+		}
+		.palm-canopy {
+			position: absolute;
+			top: 0;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 64px;
+			height: 50px;
+		}
+		.palm-canopy span {
+			position: absolute;
+			width: 36px;
+			height: 22px;
+			background: #38aa50;
+			border-radius: 50%;
+			top: 14px;
+			left: 14px;
+		}
+		.palm-canopy span:nth-child(1) { transform: rotate(-35deg) translateX(-14px); background: #2f9446; }
+		.palm-canopy span:nth-child(2) { transform: rotate(35deg) translateX(14px); background: #2f9446; }
+		.palm-canopy span:nth-child(3) { transform: translateY(-12px); }
+
+		/* Railway track */
+		.track {
+			position: absolute;
+			bottom: 0;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 100%;
+			height: 30%;
+			background: linear-gradient(180deg, #b09474 0%, #8a6e50 100%);
+			clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+		}
+		.sleeper {
+			position: absolute;
+			left: 50%;
+			transform: translateX(-50%);
+			height: 7px;
+			background: #7a5638;
+			border-radius: 2px;
+		}
+		.rail {
+			position: absolute;
+			bottom: 0;
+			width: 5px;
+			background: linear-gradient(90deg, #6c727e, #e4e8f0, #6c727e);
+			transform-origin: bottom center;
+		}
+
 		.content {
 			position: relative;
 			z-index: 10;
 			display: flex;
 			flex-direction: column;
 			align-items: center;
-			gap: 20px;
+			gap: 18px;
 			padding: 20px;
+			margin-bottom: 6%;
 		}
 
-		/* Runner character preview */
+		/* Runner (capped kid) */
 		.runner-container {
 			position: relative;
 			width: 80px;
 			height: 120px;
-			animation: bounce 1s ease-in-out infinite;
+			animation: bounce 0.9s ease-in-out infinite;
 		}
-
 		@keyframes bounce {
-
-			0%,
-			100% {
-				transform: translateY(0);
-			}
-
-			50% {
-				transform: translateY(-12px);
-			}
+			0%, 100% { transform: translateY(0); }
+			50% { transform: translateY(-12px); }
 		}
+		.r-backpack {
+			position: absolute; width: 50px; height: 40px; background: #46beaa;
+			border-radius: 10px; left: 50%; top: 52px; transform: translateX(-50%);
+		}
+		.r-cap {
+			position: absolute; width: 52px; height: 20px; background: #e43838;
+			border-radius: 12px 12px 0 0; left: 50%; top: 4px; transform: translateX(-50%);
+		}
+		.r-cap-brim {
+			position: absolute; width: 30px; height: 8px; background: #b82626;
+			border-radius: 0 0 6px 6px; left: 50%; top: 22px; transform: translateX(-50%);
+		}
+		.r-head {
+			position: absolute; width: 48px; height: 34px; background: #f4c8a2;
+			border-radius: 8px; left: 50%; top: 18px; transform: translateX(-50%);
+		}
+		.r-eyes { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; }
+		.eye { width: 7px; height: 7px; background: #1e1e24; border-radius: 50%; }
+		.r-body {
+			position: absolute; width: 56px; height: 42px; background: #f8f8fa;
+			border-radius: 10px; left: 50%; top: 50px; transform: translateX(-50%);
+			box-shadow: inset -8px 0 0 rgba(0,0,0,0.06);
+		}
+		.r-body::after {
+			content: ''; position: absolute; width: 16px; height: 10px; background: #ffb028;
+			border-radius: 4px; left: 12px; top: 12px;
+		}
+		.r-legs {
+			position: absolute; width: 50px; height: 26px; left: 50%; bottom: 4px; transform: translateX(-50%);
+			display: flex; justify-content: space-between;
+		}
+		.leg { width: 22px; height: 26px; background: #426cb2; border-radius: 4px; }
+		.leg.dark { background: #2e508c; }
+		.r-shoes {
+			position: absolute; width: 54px; bottom: 0; left: 50%; transform: translateX(-50%);
+			display: flex; justify-content: space-between;
+		}
+		.shoe { width: 24px; height: 9px; background: #fae240; border-radius: 4px; }
 
-		.runner-hair {
+		.coin {
 			position: absolute;
-			width: 50px;
-			height: 12px;
-			background: #ff7828;
-			border-radius: 4px 4px 0 0;
-			left: 50%;
-			top: 0;
-			transform: translateX(-50%);
+			width: 16px; height: 16px; border-radius: 50%;
+			background: radial-gradient(circle at 35% 35%, #ffe26e, #ffc624 60%, #d69612);
+			border: 2px solid #d69612;
+			animation: spin 1.6s ease-in-out infinite;
+		}
+		.coin-1 { left: 30%; top: 46%; animation-delay: 0s; }
+		.coin-2 { right: 30%; top: 52%; animation-delay: 0.4s; }
+		.coin-3 { left: 50%; top: 40%; animation-delay: 0.8s; }
+		@keyframes spin {
+			0%, 100% { transform: scaleX(1); }
+			50% { transform: scaleX(0.3); }
 		}
 
-		.runner-head {
-			position: absolute;
-			width: 50px;
-			height: 38px;
-			background: #e6b99b;
-			border-radius: 6px;
-			left: 50%;
-			top: 12px;
-			transform: translateX(-50%);
-		}
-
-		.runner-eyes {
-			position: absolute;
-			top: 12px;
-			left: 50%;
-			transform: translateX(-50%);
-			display: flex;
-			gap: 14px;
-		}
-
-		.eye {
-			width: 8px;
-			height: 8px;
-			background: #141414;
-			border-radius: 50%;
-		}
-
-		.runner-body {
-			position: absolute;
-			width: 56px;
-			height: 44px;
-			background: #32c8dc;
-			border-radius: 8px;
-			left: 50%;
-			top: 50px;
-			transform: translateX(-50%);
-		}
-
-		.runner-legs {
-			position: absolute;
-			width: 44px;
-			height: 24px;
-			background: #2864b4;
-			border-radius: 4px;
-			left: 50%;
-			bottom: 0;
-			transform: translateX(-50%);
-		}
-
-		/* Speed lines behind runner */
-		.speed-lines {
-			position: absolute;
-			left: -30px;
-			top: 50%;
-			transform: translateY(-50%);
-			display: flex;
-			flex-direction: column;
-			gap: 12px;
-			animation: speedPulse 0.8s ease-in-out infinite;
-		}
-
-		@keyframes speedPulse {
-
-			0%,
-			100% {
-				opacity: 0.4;
-				transform: translateY(-50%) translateX(0);
-			}
-
-			50% {
-				opacity: 0.8;
-				transform: translateY(-50%) translateX(-5px);
-			}
-		}
-
-		.speed-line {
-			height: 3px;
-			background: linear-gradient(90deg, transparent 0%, rgba(150, 220, 255, 0.8) 100%);
-			border-radius: 2px;
-		}
-
-		.speed-line:nth-child(1) {
-			width: 25px;
-		}
-
-		.speed-line:nth-child(2) {
-			width: 35px;
-		}
-
-		.speed-line:nth-child(3) {
-			width: 20px;
-		}
-
-		/* Title */
 		.title {
-			font-size: 42px;
+			font-size: 46px;
 			font-weight: 800;
 			letter-spacing: 4px;
 			color: #ffffff;
-			text-shadow:
-				0 0 40px rgba(80, 255, 160, 0.5),
-				0 4px 0 rgba(50, 200, 100, 0.3);
-			margin-top: 10px;
+			text-shadow: 0 3px 0 rgba(40, 48, 60, 0.25), 0 0 30px rgba(255, 255, 255, 0.4);
+			margin-top: 6px;
 		}
-
-		/* Subtitle */
 		.subtitle {
 			font-size: 16px;
-			color: #50dcc8;
+			color: #ffffff;
 			letter-spacing: 1px;
-			opacity: 0.9;
+			text-shadow: 0 1px 3px rgba(40, 48, 60, 0.3);
 		}
 
-		/* Play button - large, attractive, and highly clickable */
 		.play-btn {
 			position: relative;
 			display: flex;
 			align-items: center;
 			justify-content: center;
 			gap: 14px;
-			padding: 22px 64px;
+			padding: 20px 60px;
 			background: linear-gradient(180deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
 			border: none;
 			border-radius: 16px;
@@ -334,19 +255,13 @@
 			font-weight: 800;
 			letter-spacing: 3px;
 			cursor: pointer;
-			box-shadow:
-				0 8px 0 #15803d,
-				0 10px 20px rgba(34, 197, 94, 0.5),
-				0 0 40px rgba(74, 222, 128, 0.4),
-				inset 0 2px 0 rgba(255, 255, 255, 0.25);
+			box-shadow: 0 8px 0 #15803d, 0 10px 20px rgba(34, 197, 94, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.25);
 			transition: all 0.12s ease;
-			margin-top: 16px;
-			animation: btnPulse 1.5s ease-in-out infinite, btnGlow 2s ease-in-out infinite;
+			margin-top: 10px;
+			animation: btnPulse 1.5s ease-in-out infinite;
 			text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 			overflow: hidden;
 		}
-
-		/* Shiny overlay effect */
 		.play-btn::before {
 			content: '';
 			position: absolute;
@@ -357,302 +272,111 @@
 			background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
 			animation: shine 2.5s ease-in-out infinite;
 		}
-
-		@keyframes shine {
-			0% {
-				left: -100%;
-			}
-			50%, 100% {
-				left: 100%;
-			}
-		}
-
-		@keyframes btnPulse {
-			0%, 100% {
-				transform: scale(1);
-			}
-			50% {
-				transform: scale(1.05);
-			}
-		}
-
-		@keyframes btnGlow {
-			0%, 100% {
-				box-shadow:
-					0 8px 0 #15803d,
-					0 10px 20px rgba(34, 197, 94, 0.5),
-					0 0 40px rgba(74, 222, 128, 0.4),
-					inset 0 2px 0 rgba(255, 255, 255, 0.25);
-			}
-			50% {
-				box-shadow:
-					0 8px 0 #15803d,
-					0 10px 30px rgba(34, 197, 94, 0.7),
-					0 0 60px rgba(74, 222, 128, 0.6),
-					inset 0 2px 0 rgba(255, 255, 255, 0.25);
-			}
-		}
-
-		.play-btn:hover {
-			transform: translateY(-4px) scale(1.08);
-			box-shadow:
-				0 12px 0 #15803d,
-				0 16px 40px rgba(34, 197, 94, 0.6),
-				0 0 70px rgba(74, 222, 128, 0.5),
-				inset 0 2px 0 rgba(255, 255, 255, 0.3);
-			background: linear-gradient(180deg, #5eead4 0%, #4ade80 50%, #22c55e 100%);
-		}
-
-		.play-btn:active {
-			transform: translateY(4px) scale(1.02);
-			box-shadow:
-				0 2px 0 #15803d,
-				0 4px 10px rgba(34, 197, 94, 0.4),
-				0 0 30px rgba(74, 222, 128, 0.3),
-				inset 0 2px 0 rgba(255, 255, 255, 0.2);
-			animation: none;
-		}
-
+		@keyframes shine { 0% { left: -100%; } 50%, 100% { left: 100%; } }
+		@keyframes btnPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+		.play-btn:hover { transform: translateY(-4px) scale(1.08); }
+		.play-btn:active { transform: translateY(4px) scale(1.02); animation: none; }
 		.play-icon {
-			width: 0;
-			height: 0;
+			width: 0; height: 0;
 			border-left: 18px solid white;
 			border-top: 12px solid transparent;
 			border-bottom: 12px solid transparent;
 			filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
 		}
 
-		/* Stats row */
-		.stats {
-			display: flex;
-			gap: 30px;
-			margin-top: 15px;
+		.stats { display: flex; gap: 30px; margin-top: 12px; }
+		.stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+		.stat-pill {
+			display: flex; align-items: center; gap: 8px;
+			background: rgba(44, 62, 92, 0.55);
+			padding: 6px 14px; border-radius: 20px;
 		}
-
-		.stat {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			gap: 4px;
-		}
-
-		.stat-icon {
-			width: 24px;
-			height: 24px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-
 		.coin-icon {
-			width: 18px;
-			height: 14px;
-			background: linear-gradient(135deg, #ffc800 0%, #c89600 100%);
-			border-radius: 3px;
-			box-shadow: 0 0 10px rgba(255, 200, 0, 0.5);
+			width: 16px; height: 16px; border-radius: 50%;
+			background: radial-gradient(circle at 35% 35%, #ffe26e, #ffc624 60%, #d69612);
+			border: 2px solid #d69612;
 		}
-
 		.trophy-icon {
-			width: 16px;
-			height: 18px;
-			background: linear-gradient(135deg, #ffd24a 0%, #c8a030 100%);
-			border-radius: 2px 2px 4px 4px;
-			position: relative;
+			width: 14px; height: 16px; background: #ffd24a; border-radius: 2px 2px 5px 5px; position: relative;
 		}
-
 		.trophy-icon::before {
-			content: '';
-			position: absolute;
-			top: -4px;
-			left: 50%;
-			transform: translateX(-50%);
-			width: 20px;
-			height: 6px;
-			background: inherit;
-			border-radius: 2px;
+			content: ''; position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
+			width: 20px; height: 5px; background: inherit; border-radius: 2px;
 		}
-
-		.stat-value {
-			font-size: 18px;
-			font-weight: 700;
-			color: #ffd24a;
-		}
-
-		.stat-label {
-			font-size: 11px;
-			color: rgba(255, 255, 255, 0.6);
-			text-transform: uppercase;
-			letter-spacing: 1px;
-		}
-
-		/* Track preview */
-		.track-preview {
-			position: absolute;
-			bottom: 0;
-			left: 0;
-			right: 0;
-			height: 40%;
-			background: linear-gradient(180deg,
-					transparent 0%,
-					rgba(30, 40, 38, 0.5) 30%,
-					rgba(45, 55, 50, 0.8) 100%);
-			pointer-events: none;
-		}
-
-		.lane-lines {
-			position: absolute;
-			bottom: 60px;
-			left: 50%;
-			transform: translateX(-50%);
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			gap: 15px;
-			opacity: 0.3;
-		}
-
-		.lane-line {
-			height: 2px;
-			background: #50dcc8;
-			border-radius: 1px;
-		}
-
-		.lane-line:nth-child(1) {
-			width: 40px;
-		}
-
-		.lane-line:nth-child(2) {
-			width: 80px;
-		}
-
-		.lane-line:nth-child(3) {
-			width: 140px;
-		}
-
-		.lane-line:nth-child(4) {
-			width: 220px;
-		}
-
-		/* Wall accents */
-		.wall-left,
-		.wall-right {
-			position: absolute;
-			top: 0;
-			bottom: 0;
-			width: 40px;
-			pointer-events: none;
-		}
-
-		.wall-left {
-			left: 0;
-			background: linear-gradient(90deg, #14281f 0%, transparent 100%);
-		}
-
-		.wall-right {
-			right: 0;
-			background: linear-gradient(-90deg, #14281f 0%, transparent 100%);
-		}
-
-		.wall-accent {
-			position: absolute;
-			width: 4px;
-			background: rgba(60, 180, 120, 0.5);
-		}
-
-		.wall-left .wall-accent {
-			right: 10px;
-			top: 0;
-			bottom: 0;
-		}
-
-		.wall-right .wall-accent {
-			left: 10px;
-			top: 0;
-			bottom: 0;
-		}
+		.stat-value { font-size: 18px; font-weight: 700; color: #ffffff; }
+		.stat-label { font-size: 11px; color: rgba(255, 255, 255, 0.85); text-transform: uppercase; letter-spacing: 1px; }
 	</style>
 </head>
 
 <body>
 	<div class="preview-container" id="preview">
-		<!-- Background elements -->
 		<div class="bg-layer">
-			<!-- Crystals -->
-			<div class="crystal crystal-1"></div>
-			<div class="crystal crystal-2"></div>
-			<div class="crystal crystal-3"></div>
-			<div class="crystal crystal-4"></div>
-			<div class="crystal crystal-5"></div>
+			<div class="sun"></div>
+			<div class="cloud cloud-1"></div>
+			<div class="cloud cloud-2"></div>
 
-			<!-- Particles -->
-			<div class="particle"></div>
-			<div class="particle"></div>
-			<div class="particle"></div>
-			<div class="particle"></div>
-		</div>
+			<!-- Railway track -->
+			<div class="track"></div>
+			<div class="rail" style="height:30%; left:38%; transform: rotate(11deg);"></div>
+			<div class="rail" style="height:30%; left:46%; transform: rotate(4deg);"></div>
+			<div class="rail" style="height:30%; right:46%; transform: rotate(-4deg);"></div>
+			<div class="rail" style="height:30%; right:38%; transform: rotate(-11deg);"></div>
+			<div class="sleeper" style="width:70px; bottom:18%;"></div>
+			<div class="sleeper" style="width:100px; bottom:12%;"></div>
+			<div class="sleeper" style="width:140px; bottom:6%;"></div>
+			<div class="sleeper" style="width:190px; bottom:1%;"></div>
 
-		<!-- Wall accents -->
-		<div class="wall-left">
-			<div class="wall-accent"></div>
-		</div>
-		<div class="wall-right">
-			<div class="wall-accent"></div>
-		</div>
-
-		<!-- Track preview -->
-		<div class="track-preview">
-			<div class="lane-lines">
-				<div class="lane-line"></div>
-				<div class="lane-line"></div>
-				<div class="lane-line"></div>
-				<div class="lane-line"></div>
+			<!-- Palms -->
+			<div class="palm palm-left">
+				<div class="palm-canopy"><span></span><span></span><span></span></div>
+				<div class="palm-trunk"></div>
 			</div>
+			<div class="palm palm-right">
+				<div class="palm-canopy"><span></span><span></span><span></span></div>
+				<div class="palm-trunk"></div>
+			</div>
+
+			<!-- Floating coins -->
+			<div class="coin coin-1"></div>
+			<div class="coin coin-2"></div>
+			<div class="coin coin-3"></div>
 		</div>
 
-		<!-- Main content -->
 		<div class="content">
-			<!-- Runner character -->
+			<!-- Runner -->
 			<div class="runner-container">
-				<div class="speed-lines">
-					<div class="speed-line"></div>
-					<div class="speed-line"></div>
-					<div class="speed-line"></div>
+				<div class="r-backpack"></div>
+				<div class="r-cap"></div>
+				<div class="r-cap-brim"></div>
+				<div class="r-head">
+					<div class="r-eyes"><div class="eye"></div><div class="eye"></div></div>
 				</div>
-				<div class="runner-hair"></div>
-				<div class="runner-head">
-					<div class="runner-eyes">
-						<div class="eye"></div>
-						<div class="eye"></div>
-					</div>
-				</div>
-				<div class="runner-body"></div>
-				<div class="runner-legs"></div>
+				<div class="r-body"></div>
+				<div class="r-legs"><div class="leg"></div><div class="leg dark"></div></div>
+				<div class="r-shoes"><div class="shoe"></div><div class="shoe"></div></div>
 			</div>
 
-			<!-- Title -->
 			<h1 class="title">RUNRUN</h1>
 			<p class="subtitle">How far can you run?</p>
 
-			<!-- Play button -->
 			<button class="play-btn" id="playBtn">
 				<span class="play-icon"></span>
 				PLAY
 			</button>
 
-			<!-- Stats -->
 			<div class="stats">
 				<div class="stat">
-					<div class="stat-icon">
+					<div class="stat-pill">
 						<div class="trophy-icon"></div>
+						<span class="stat-value" id="highScore">0</span>
 					</div>
-					<span class="stat-value" id="highScore">0</span>
 					<span class="stat-label">Best</span>
 				</div>
 				<div class="stat">
-					<div class="stat-icon">
+					<div class="stat-pill">
 						<div class="coin-icon"></div>
+						<span class="stat-value" id="totalCoins">0</span>
 					</div>
-					<span class="stat-value" id="totalCoins">0</span>
 					<span class="stat-label">Coins</span>
 				</div>
 			</div>
