@@ -3,7 +3,7 @@ import { GAME_CONFIG } from '../config'
 import { createCoin } from '../objects/collectible'
 import { createObstacle, type ObstacleType } from '../objects/obstacle'
 
-type SpawnType = 'coin' | 'stone_wall' | 'low_beam' | 'pillar'
+type SpawnType = 'coin' | 'train' | 'jump_barrier' | 'slide_gate'
 
 export function createSpawnerSystem(k: KAPLAYCtx) {
   let spawnTimer = 0
@@ -34,9 +34,9 @@ export function createSpawnerSystem(k: KAPLAYCtx) {
 
     const roll = k.rand(0, 1)
     if (roll < 0.35) return 'coin'
-    if (roll < 0.6) return 'stone_wall'
-    if (roll < 0.8) return 'low_beam'
-    return 'pillar'
+    if (roll < 0.62) return 'train'        // dodge
+    if (roll < 0.82) return 'jump_barrier' // jump
+    return 'slide_gate'                    // slide
   }
 
   function spawnCoinLine(lane: number, count: number) {
@@ -49,7 +49,7 @@ export function createSpawnerSystem(k: KAPLAYCtx) {
   }
 
   return {
-    update(dt: number, speed: number) {
+    update(dt: number, _speed: number) {
       gameTime += dt
 
       // Update spawn interval based on time (gets tighter)

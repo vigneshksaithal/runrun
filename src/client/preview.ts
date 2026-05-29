@@ -39,10 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const playBtn = document.getElementById('playBtn')
 
   if (playBtn) {
-    playBtn.addEventListener('click', launchGame as EventListener)
+    playBtn.addEventListener('click', launchGame as unknown as EventListener)
   }
 
   if (preview) {
-    preview.addEventListener('click', launchGame as EventListener)
+    preview.addEventListener('click', launchGame as unknown as EventListener)
   }
 })
